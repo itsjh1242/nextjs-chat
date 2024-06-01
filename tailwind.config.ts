@@ -12,6 +12,19 @@ const config = {
       },
     },
     extend: {
+      maxWidth: {
+        half: "50%",
+      },
+      flexGrow: {
+        1: "1",
+        2: "2",
+        3: "3",
+        4: "4",
+        5: "5",
+        6: "6",
+        7: "7",
+        10: "10",
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
