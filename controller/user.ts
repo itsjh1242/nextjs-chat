@@ -4,13 +4,14 @@ import { collection, doc, updateDoc, getDocs, getDoc, query, where, onSnapshot }
 const userCollection = collection(db, "user");
 
 // 사용자 정보 가져오기
-export async function getUser() {
+export async function getUser(callback: (user: any) => void) {
   try {
     const userDocRef = doc(userCollection, auth.currentUser?.uid);
-    const userDoc = await getDoc(userDocRef);
-    if (userDoc.exists()) {
-      return userDoc.data();
-    }
+    return onSnapshot(userDocRef, (userDoc) => {
+      if (userDoc.exists()) {
+        callback(userDoc.data());
+      }
+    });
   } catch (error) {
     console.error("user.ts, getUser() ERR: ", error);
   }
@@ -101,32 +102,65 @@ export async function acceptRequest({ uuid, tuid }: { uuid: any; tuid: any }) {
     // 타겟 친구 목록에 업데이트
     const updatedTargetFriends = { ...targetData?.friends, [uuid]: { ...targetData?.friends[uuid], isAccept: true } };
     await updateDoc(targetDocRef, { friends: updatedTargetFriends });
-    
+
     return targetData?.name || "NULL";
   } catch (error) {
     console.error(error);
   }
 }
 
-// 친구 목록 가져오기
+// 실시간 친구 목록 가져오기
 export async function getFriends({ uid }: { uid: string }, callback: (friends: any[]) => void) {
-  const userDocRef = doc(userCollection, uid);
+  try {
+    const userDocRef = doc(userCollection, uid);
 
-  const unsubscribe = onSnapshot(userDocRef, async (doc) => {
-    if (doc.exists()) {
-      const data = doc.data();
-      if (data && data.friends) {
-        // 각 친구 UID에 대해 getUserByUid 호출
-        const friendsPromises = Object.values(data.friends).map((friend: any) => getUserByUid({ uid: friend.uid }));
-        // 모든 getUserByUid 호출이 완료될 때까지 기다림
-        const friends = await Promise.all(friendsPromises);
-        callback(friends.filter((friend) => friend !== null));
+    const unsubscribe = onSnapshot(userDocRef, async (doc) => {
+      if (doc.exists()) {
+        const data = doc.data();
+        if (data && data.friends) {
+          // 각 친구 UID에 대해 getUserByUid 호출
+          const friendsPromises = Object.values(data.friends).map((friend: any) => getUserByUid({ uid: friend.uid }));
+          // 모든 getUserByUid 호출이 완료될 때까지 기다림
+          const friends = await Promise.all(friendsPromises);
+          callback(friends.filter((friend) => friend !== null));
+        } else {
+          callback([]);
+        }
       } else {
         callback([]);
       }
+    });
+    return unsubscribe;
+  } catch (error) {
+    return console.error("user.ts, getFriends() ERR: ", error);
+  }
+}
+
+// 프로필 정보 변경 저장
+export async function saveProfile(user: any) {
+  try {
+    console.log(user);
+    const userDocRef = doc(userCollection, user.uid);
+    await updateDoc(userDocRef, user);
+    return true;
+  } catch (error) {
+    console.error("user.ts, saveProfile() ERR: ", error);
+    return null;
+  }
+}
+
+// 이미 존재하는 이름인지 유효성 검사
+export async function isExistName({ name, tag }: { name: string; tag: string }) {
+  try {
+    const q = query(userCollection, where("name", "==", name), where("tag", "==", tag));
+    const querySnapshot = await getDocs(q);
+    if (querySnapshot.size === 0) {
+      return false;
     } else {
-      callback([]);
+      return true;
     }
-  });
-  return unsubscribe;
+  } catch (error) {
+    console.error(error);
+    return true;
+  }
 }

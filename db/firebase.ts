@@ -2,6 +2,7 @@ import { getApp, getApps, initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
 import { getFirestore, collection, doc, setDoc, getDoc } from "firebase/firestore";
 import { signInWithPopup } from "firebase/auth";
+import { initOnline } from "@/controller/chat";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_API_KEY,
@@ -21,6 +22,8 @@ const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
 
 const userCollection = collection(db, "user");
+const onlineCollection = collection(db, "online");
+
 // 구글 로그인
 async function signInWithGoogle() {
   try {
@@ -28,9 +31,10 @@ async function signInWithGoogle() {
     const user = res.user;
 
     const userDocRef = doc(userCollection, user.uid);
+    const onlineDocRef = doc(onlineCollection, user.uid);
     // 사용자 문서 가져오기
     const userDoc = await getDoc(userDocRef);
-    // 신규 사용자일 경우에만 사용자 등록 및 초기화
+    // 신규 사용자일 경우에만 사용자 등록 및 초기화 && 채팅방 1대1 온라인 상태 초기화
     if (!userDoc.exists()) {
       await setDoc(userDocRef, {
         name: user.displayName,
@@ -39,9 +43,11 @@ async function signInWithGoogle() {
         photoURL: user.photoURL,
         uid: user.uid,
         friends: {},
-        req_friends: {},
-        rec_friends: {},
         status_msg: "아직 상태 메시지가 없습니다.",
+      });
+      await setDoc(onlineDocRef, {
+        uid: user.uid,
+        target: null,
       });
     }
   } catch (error) {

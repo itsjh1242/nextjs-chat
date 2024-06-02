@@ -3,6 +3,7 @@ import { useState } from "react";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 import { CustomButton } from "@/components/ui/Buttons";
+import { isExistName, saveProfile } from "@/controller/user";
 
 const Modal = ({ className, children, onClick }: { className?: string; children?: React.ReactNode | null; onClick?: () => void }) => {
   return (
@@ -31,15 +32,30 @@ export const EditProfile = ({ user, close }: { user: any; close: () => void }) =
   const [tag, setTag] = useState(profile.tag);
   const [statusMsg, setStatusMsg] = useState(profile.status_msg);
 
-  const handleSave = () => {
-    // 변경된 프로필 정보 저장
-    const updatedProfile = {
-      ...profile,
-      name: name,
-      tag: tag,
-      status_msg: statusMsg,
-    };
-    close();
+  const handleSave = async () => {
+    if (await isExistName({ name: name, tag: tag })) {
+      // 존재하면
+      return alert("그 이름은 누가 사용중이네요..? 태그를 다른걸로 적어봐요.");
+    } else {
+      // 변경된 프로필 정보 저장
+      const updatedProfile = {
+        ...profile,
+        name: name,
+        tag: tag,
+        status_msg: statusMsg,
+      };
+      const res = await saveProfile(updatedProfile);
+      if (res) {
+        alert("변경된 정보로 프로필을 저장했습니다.");
+      }
+      close();
+    }
+  };
+
+  // 특수 문자 제거
+  const textPreprocessing = ({ text }: { text: string }) => {
+    const ref = /[`~!@#$%^&*()_|+\-=?;:'",.<>\{\}\[\]\\\/]/gim;
+    return text.replace(ref, "");
   };
 
   return (
@@ -55,12 +71,24 @@ export const EditProfile = ({ user, close }: { user: any; close: () => void }) =
         {/* 이름 입력 */}
         <div className="flex flex-col items-start w-full gap-1">
           <label htmlFor="name">이름</label>
-          <input id="name" type="text" value={name} onChange={(e) => setName(e.target.value)} className="w-full border rounded-md px-3 py-2" />
+          <input
+            id="name"
+            type="text"
+            value={name}
+            onChange={(e) => setName(textPreprocessing({ text: e.target.value }))}
+            className="w-full border rounded-md px-3 py-2"
+          />
         </div>
         {/* 태그 입력 */}
         <div className="flex flex-col items-start w-full gap-1">
           <label htmlFor="tag">태그</label>
-          <input id="tag" type="text" value={tag} onChange={(e) => setTag(e.target.value)} className="w-full border rounded-md px-3 py-2" />
+          <input
+            id="tag"
+            type="text"
+            value={tag}
+            onChange={(e) => setTag(textPreprocessing({ text: e.target.value }))}
+            className="w-full border rounded-md px-3 py-2"
+          />
         </div>
         {/* 상태메시지 입력 */}
         <div className="flex flex-col items-start w-full gap-1">

@@ -6,26 +6,31 @@ import { CustomButton } from "@/components/ui/Buttons";
 import { getUser } from "@/controller/user";
 import { signInWithGoogle } from "@/db/firebase";
 import { DocumentData } from "firebase/firestore";
+import { initOnline } from "@/controller/chat";
 
 export default function LandingPage() {
   const isLogin = useAuth();
   const [user, setUser] = useState<DocumentData | null>(null);
 
   // 사용자 정보 가져오기
-  const fetchData = async () => {
-    const currentUser = await getUser();
-    if (currentUser !== undefined) {
-      setUser(currentUser);
-    }
-  };
-
   useEffect(() => {
-    const fetchDataOnMount = async () => {
-      if (isLogin) {
-        await fetchData();
+    if (!isLogin) return;
+
+    const handleGetUser = async (user: any) => {
+      setUser(user);
+      await initOnline({ host: user.uid });
+    };
+
+    // 실시간 가져오기
+    const fetchUser = async () => {
+      const unsubscribe = await getUser(handleGetUser);
+      console.log("fetchUser");
+      if (unsubscribe) {
+        return () => unsubscribe();
       }
     };
-    fetchDataOnMount();
+
+    fetchUser();
   }, [isLogin]);
 
   // 구글 로그인
