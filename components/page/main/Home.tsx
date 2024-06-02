@@ -76,7 +76,7 @@ export default function HomePage({ user }: { user: any }) {
   if (mobile) return <Mobile />;
 
   return (
-    <main className="w-screen h-screen  m-auto p-12 bg-slate-600">
+    <main className="w-screen h-screen m-auto p-12 bg-slate-600">
       {modalEditProfile ? (
         <EditProfile
           user={user}
@@ -85,7 +85,7 @@ export default function HomePage({ user }: { user: any }) {
           }}
         />
       ) : null}
-      <div className="flex  w-full h-full rounded-xl overflow-hidden">
+      <div className="flex w-full h-full">
         {/* 메뉴 */}
         <div className="flex flex-col gap-8 w-3/12 h-full bg-slate-50 p-6">
           {/* 프로필 */}
@@ -140,59 +140,12 @@ export default function HomePage({ user }: { user: any }) {
             }}
           />
           {/* 친구 목록 */}
-          <div className="w-full h-full">
+          <div className="w-full h-full overflow-hidden">
             <FriendList user={user} friends={friends} />
           </div>
         </div>
         {/* 채팅 화면 */}
-        <div className="w-9/12 h-full flex flex-col bg-white px-8 pb-4">
-          {/* 헤더 */}
-          <div className="grow-1 border-b-2 flex justify-center items-center">
-            <div className="w-full flex justify-between items-center gap-4">
-              {/* 프로필 이미지 */}
-              <div className="flex justify-center items-center rounded-full overflow-hidden border">
-                <Image src={`/user.png`} width={60} height={60} alt="user_icon" />
-              </div>
-              {/* 이름, 상태메시지 */}
-              <div className="w-full flex flex-col items-start">
-                <p className="text-xl font-semibold">친구 1</p>
-              </div>
-            </div>
-          </div>
-          {/* 채팅 박스 */}
-          <div className="grow-10 flex flex-col justify-end gap-4">
-            {/* 상대방 */}
-            <div className="flex gap-2 items-end">
-              <div className="flex justify-center items-center rounded-full overflow-hidden border">
-                <Image src={`/user.png`} width={30} height={30} alt="user_icon" />
-              </div>
-              <p className="max-w-half bg-slate-100 px-4 py-2 text-sm rounded-tr-xl rounded-tl-xl rounded-br-xl">
-                채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2
-              </p>
-            </div>
-            {/* 나 */}
-            <div className="flex justify-end gap-2 items-end">
-              <p className="max-w-half bg-blue-500 text-white px-4 py-2 text-sm rounded-tl-xl rounded-tr-xl rounded-bl-xl">
-                채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2
-              </p>
-              <div className="flex justify-center items-center rounded-full overflow-hidden border">
-                <Image src={`/user.png`} width={30} height={30} alt="user_icon" />
-              </div>
-            </div>
-          </div>
-          {/* 채팅 입력 */}
-          <div className="grow-1 flex justify-center items-center pt-2">
-            <div className="w-full h-2/3 flex justify-between items-center gap-2 rounded-full bg-slate-200 px-8">
-              <input type="text" placeholder="채팅을 입력하세요" className="bg-transparent outline-none w-10/12" />
-              <div className="flex justify-end items-center w-1/12">
-                <VscSmiley size={24} color="#6D6D6D" className="cursor-pointer" />
-              </div>
-              <div className="w-fit h-fit flex justify-center items-center cursor-pointer p-2 rounded-full bg-blue-500 ">
-                <VscSend size={24} color="#ffffff" />
-              </div>
-            </div>
-          </div>
-        </div>
+        <Chat />
       </div>
     </main>
   );
@@ -251,6 +204,77 @@ const FriendList = ({ user, friends }: { user: any; friends: any[] | null }) => 
           </div>
         );
       })}
+    </div>
+  );
+};
+
+const Chat = () => {
+  return (
+    <div className="h-full flex flex-col bg-white p-2">
+      {/* 헤더 */}
+      <div className="border-b-2 flex justify-center items-center py-2">
+        <div className="w-full flex justify-between items-center gap-4">
+          {/* 프로필 이미지 */}
+          <div className="flex justify-center items-center rounded-full overflow-hidden border">
+            <Image src={`/user.png`} width={60} height={60} alt="user_icon" />
+          </div>
+          {/* 이름, 상태메시지 */}
+          <div className="w-full flex flex-col items-start">
+            <p className="text-xl font-semibold">친구 1</p>
+          </div>
+        </div>
+      </div>
+      {/* 채팅 박스 */}
+      <div className="h-full flex flex-col gap-4 p-4 overflow-y-scroll">
+        {/* 상대방 */}
+        <div className="flex gap-2 justify-start items-end">
+          <div className="flex justify-center items-center rounded-full overflow-hidden border">
+            <Image src={`/user.png`} width={30} height={30} alt="user_icon" />
+          </div>
+          <p className="max-w-half bg-slate-100 px-4 py-2 text-sm rounded-tr-xl rounded-tl-xl rounded-br-xl">
+            채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2
+          </p>
+        </div>
+        {/* 나 */}
+        <div className="flex justify-end gap-2 items-end">
+          <p className="max-w-half bg-blue-500 text-white px-4 py-2 text-sm rounded-tl-xl rounded-tr-xl rounded-bl-xl">
+            채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2
+          </p>
+          <div className="flex justify-center items-center rounded-full overflow-hidden border">
+            <Image src={`/user.png`} width={30} height={30} alt="user_icon" />
+          </div>
+        </div>
+        {/* 더 많은 채팅 메시지들... */}
+        <div className="flex justify-end gap-2 items-end">
+          <p className="max-w-half bg-blue-500 text-white px-4 py-2 text-sm rounded-tl-xl rounded-tr-xl rounded-bl-xl">
+            11채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2
+          </p>
+          <div className="flex justify-center items-center rounded-full overflow-hidden border">
+            <Image src={`/user.png`} width={30} height={30} alt="user_icon" />
+          </div>
+        </div>
+        <div className="flex justify-end gap-2 items-end">
+          <p className="max-w-half bg-blue-500 text-white px-4 py-2 text-sm rounded-tl-xl rounded-tr-xl rounded-bl-xl">
+            11채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2채팅2
+          </p>
+          <div className="flex justify-center items-center rounded-full overflow-hidden border">
+            <Image src={`/user.png`} width={30} height={30} alt="user_icon" />
+          </div>
+        </div>
+      </div>
+
+      {/* 채팅 입력 */}
+      <div className="flex justify-center items-center pt-2 h-fit border-t-2">
+        <div className="w-full h-fit flex justify-between items-center gap-2 rounded-full bg-slate-200 px-4 py-2">
+          <input type="text" placeholder="채팅을 입력하세요" className="bg-transparent outline-none w-10/12" />
+          <div className="flex justify-end items-center w-1/12">
+            <VscSmiley size={24} color="#6D6D6D" className="cursor-pointer" />
+          </div>
+          <div className="flex justify-center items-center cursor-pointer p-2 rounded-full bg-blue-500">
+            <VscSend size={24} color="#ffffff" />
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
