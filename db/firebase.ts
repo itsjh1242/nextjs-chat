@@ -1,6 +1,6 @@
 import { getApp, getApps, initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
+import { getFirestore, collection, doc, setDoc, getDoc } from "firebase/firestore";
 import { signInWithPopup } from "firebase/auth";
 
 const firebaseConfig = {
@@ -20,10 +20,30 @@ const db = getFirestore(app);
 const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
 
+const userCollection = collection(db, "user");
 // 구글 로그인
 async function signInWithGoogle() {
   try {
-    await signInWithPopup(auth, provider);
+    const res = await signInWithPopup(auth, provider);
+    const user = res.user;
+
+    const userDocRef = doc(userCollection, user.uid);
+    // 사용자 문서 가져오기
+    const userDoc = await getDoc(userDocRef);
+    // 신규 사용자일 경우에만 사용자 등록 및 초기화
+    if (!userDoc.exists()) {
+      await setDoc(userDocRef, {
+        name: user.displayName,
+        tag: user.email,
+        email: user.email,
+        photoURL: user.photoURL,
+        uid: user.uid,
+        friends: {},
+        req_friends: {},
+        rec_friends: {},
+        status_msg: "아직 상태 메시지가 없습니다.",
+      });
+    }
   } catch (error) {
     console.error("Error signing in with Google", error);
   }

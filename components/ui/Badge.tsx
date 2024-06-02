@@ -7,6 +7,12 @@ interface BadgeInterface {
   color?: string;
 }
 
+export const Badge = (props: BadgeInterface) => {
+  const { className, children, color } = props;
+  const colors = cs({ color: color || "blue" });
+  return <div className={cn(`px-4 py-2 rounded-full text-white text-sm font-medium`, className, colors.bg)}>{children}</div>;
+};
+
 export const RoundedNumberBadge = (props: BadgeInterface) => {
   const { className, children, color } = props;
   const colors = cs({ color: color || "blue" });
