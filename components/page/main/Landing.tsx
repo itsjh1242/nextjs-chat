@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import useAuth from "@/lib/useAuth";
+import { useAuth } from "@/lib/useAuth";
 import HomePage from "@/components/page/main/Home";
 import { CustomButton } from "@/components/ui/Buttons";
 import { getUser } from "@/controller/user";

@@ -33,7 +33,8 @@ export const EditProfile = ({ user, close }: { user: any; close: () => void }) =
   const [statusMsg, setStatusMsg] = useState(profile.status_msg);
 
   const handleSave = async () => {
-    if (await isExistName({ name: name, tag: tag })) {
+    // 그런 다음 해당 이름과 태그가 존재하는지
+    if ((profile.name !== name || profile.tag !== tag) && (await isExistName({ name: name, tag: tag }))) {
       // 존재하면
       return alert("그 이름은 누가 사용중이네요..? 태그를 다른걸로 적어봐요.");
     } else {

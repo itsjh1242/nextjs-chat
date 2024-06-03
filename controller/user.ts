@@ -1,7 +1,8 @@
 import { db, auth } from "@/db/firebase";
-import { collection, doc, updateDoc, getDocs, getDoc, query, where, onSnapshot } from "firebase/firestore";
+import { collection, doc, updateDoc, addDoc, getDocs, getDoc, query, where, onSnapshot } from "firebase/firestore";
 
 const userCollection = collection(db, "user");
+const chatCollection = collection(db, "chat");
 
 // 사용자 정보 가져오기
 export async function getUser(callback: (user: any) => void) {
@@ -70,11 +71,12 @@ export async function requestFriend({ uid, target }: { uid: string; target: stri
     }
 
     // 호스트 사용자 db 업데이트
-    const updatedHostFriends = { ...hostFriends, [target_uid]: { uid: target_uid, isAccept: false, isHost: true } };
+    // 호스트 사용자 db의 친구 데이터의 타겟 사용자는 호스트가 아니기 때문에 false ><
+    const updatedHostFriends = { ...hostFriends, [target_uid]: { uid: target_uid, isAccept: false, isHost: false, unReadMsg: 0, latestMsg: "" } };
     await updateDoc(hostDocRef, { friends: updatedHostFriends });
 
     // 요청 받는 사용자 db 업데이트
-    const updatedRecFriends = { ...targetFriends, [uid]: { uid: uid, isAccept: false, isHost: false } };
+    const updatedRecFriends = { ...targetFriends, [uid]: { uid: uid, isAccept: false, isHost: true, unReadMsg: 0, latestMsg: "" } };
     await updateDoc(targetDocRef, { friends: updatedRecFriends });
 
     return { status: true, msg: "SUC_ADD" };
@@ -95,12 +97,24 @@ export async function acceptRequest({ uuid, tuid }: { uuid: any; tuid: any }) {
     const targetDoc = await getDoc(targetDocRef);
     const targetData = targetDoc.data();
 
+    // 고유 채팅방 생성
+    const docRef = await addDoc(chatCollection, {
+      // 친구 요청 보낸 타겟이 호스트가 되는 구조 ^_^
+      host: tuid,
+      target: uuid,
+      chat: [],
+    });
+
+    // 생성된 문서의 ID를 가져와서 chat_id 필드에 업데이트
+    const chat_id = docRef.id;
+    await updateDoc(docRef, { chat_id: chat_id });
+
     // 호스트 친구 목록에 업데이트
-    const updatedHostFriends = { ...hostData?.friends, [tuid]: { ...hostData?.friends[tuid], isAccept: true } };
+    const updatedHostFriends = { ...hostData?.friends, [tuid]: { ...hostData?.friends[tuid], isAccept: true, chat_id: chat_id } };
     await updateDoc(hostDocRef, { friends: updatedHostFriends });
 
     // 타겟 친구 목록에 업데이트
-    const updatedTargetFriends = { ...targetData?.friends, [uuid]: { ...targetData?.friends[uuid], isAccept: true } };
+    const updatedTargetFriends = { ...targetData?.friends, [uuid]: { ...targetData?.friends[uuid], isAccept: true, chat_id: chat_id } };
     await updateDoc(targetDocRef, { friends: updatedTargetFriends });
 
     return targetData?.name || "NULL";
@@ -110,10 +124,9 @@ export async function acceptRequest({ uuid, tuid }: { uuid: any; tuid: any }) {
 }
 
 // 실시간 친구 목록 가져오기
-export async function getFriends({ uid }: { uid: string }, callback: (friends: any[]) => void) {
+export async function getFriends({ uid, chat_id }: { uid: string; chat_id: string }, callback: (friends: any[]) => void) {
   try {
     const userDocRef = doc(userCollection, uid);
-
     const unsubscribe = onSnapshot(userDocRef, async (doc) => {
       if (doc.exists()) {
         const data = doc.data();

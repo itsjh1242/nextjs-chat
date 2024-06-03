@@ -4,21 +4,21 @@ import { useState, useEffect } from "react";
 import { acceptRequest, getFriends, requestFriend } from "@/controller/user";
 import Image from "next/image";
 import useDevice from "@/lib/useDevice";
-import useAuth from "@/lib/useAuth";
+import { useAuth, useLeaveObserver } from "@/lib/useAuth";
 import { signOut } from "@/db/firebase";
 
 // ui
 import Mobile from "./Mobile";
-import NotUser from "../NotUser";
-import { Loading, LoadingFriendsList } from "../Loading";
+import { NotUser, NotFriend, NoChat } from "../Not";
+import { Loading, LoadingChatData, LoadingFriendsList } from "../Loading";
 import { Badge, RoundedNumberBadge } from "@/components/ui/Badge";
 import { CustomButtonSmall } from "@/components/ui/Buttons";
+
+import { getChat, initOnline, sendChat } from "@/controller/chat";
 
 // icons
 import { VscSmiley, VscSend, VscUnlock, VscEdit } from "react-icons/vsc";
 import { EditProfile } from "./Modal";
-import NoChat from "./NoChat";
-import { getChat, sendChat } from "@/controller/chat";
 
 export default function HomePage({ user }: { user: any }) {
   const isLogin = useAuth();
@@ -30,6 +30,13 @@ export default function HomePage({ user }: { user: any }) {
   const [modalEditProfile, setModalEditProfile] = useState<boolean>(false);
   // 채팅 대상 핸들
   const [target, setTarget] = useState<any | null>(null);
+  // 채팅방 핸들
+  const [chat_id, setChatID] = useState<string | null>(null);
+
+  const handleTarget = (target: any, chat_id: string) => {
+    setTarget(target);
+    setChatID(chat_id);
+  };
 
   // 친구 목록 실시간 업데이트
   useEffect(() => {
@@ -41,7 +48,7 @@ export default function HomePage({ user }: { user: any }) {
     };
     // 친구 목록을 가져오고 실시간 업데이트
     const fetchFriends = async () => {
-      const unsubscribe = await getFriends({ uid: user.uid }, handleFriendsUpdate);
+      const unsubscribe = await getFriends({ uid: user.uid, chat_id: chat_id || "" }, handleFriendsUpdate);
       console.log("fetchFriends");
       if (unsubscribe) {
         return () => unsubscribe();
@@ -49,7 +56,9 @@ export default function HomePage({ user }: { user: any }) {
     };
 
     fetchFriends();
-  }, [user]);
+  }, [user, chat_id]);
+
+  useLeaveObserver(user.uid);
 
   if (!isLogin) return <NotUser />;
   if (!user) return <Loading />;
@@ -65,26 +74,42 @@ export default function HomePage({ user }: { user: any }) {
           }}
         />
       ) : null}
-      <div className="flex w-full h-full">
+      <div className="flex w-full h-full rounded-xl overflow-hidden">
         {/* 메뉴 */}
         <Menu
           user={user}
           friends={friends}
-          setTarget={(target_uid: string) => {
-            setTarget(target_uid);
+          handleTarget={(target: any, chat_id: string) => {
+            handleTarget(target, chat_id);
           }}
           modalHandler={() => {
             setModalEditProfile(!modalEditProfile);
           }}
         />
         {/* 채팅 화면 */}
-        <Chat user={user} target={target} />
+        <Chat user={user} target={target} chat_id={chat_id} />
       </div>
     </main>
   );
 }
 
-const Menu = ({ user, friends, setTarget, modalHandler }: { user: any; friends: any; setTarget: (target_uid: string) => void; modalHandler: () => void }) => {
+const Menu = ({
+  user,
+  friends,
+  handleTarget,
+  modalHandler,
+}: {
+  user: any;
+  friends: any;
+  handleTarget: (target: any, chat_id: string) => void;
+  modalHandler: () => void;
+}) => {
+  // 로그아웃 핸들러
+  const handleLogOut = (uid: string) => {
+    initOnline({ host: uid }).then(() => {
+      signOut();
+    });
+  };
   // 친구 찾기 핸들러
   const findHandler = async (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === "Enter") {
@@ -113,7 +138,7 @@ const Menu = ({ user, friends, setTarget, modalHandler }: { user: any; friends: 
   return (
     <>
       {/* 메뉴 */}
-      <div className="flex flex-col gap-8 w-3/12 h-full bg-slate-50 p-6 truncate">
+      <div className="flex flex-col gap-4 w-3/12 h-full bg-slate-50 p-3 truncate">
         {/* 프로필 */}
         <div className="w-full flex justify-between items-center gap-4">
           {/* 프로필 이미지 */}
@@ -142,7 +167,7 @@ const Menu = ({ user, friends, setTarget, modalHandler }: { user: any; friends: 
           <CustomButtonSmall
             color="gray"
             onClick={() => {
-              signOut();
+              handleLogOut(user.uid);
             }}
           >
             <div className="flex justify-center items-center gap-2">
@@ -165,8 +190,8 @@ const Menu = ({ user, friends, setTarget, modalHandler }: { user: any; friends: 
           <FriendList
             user={user}
             friends={friends}
-            setTarget={(target_uid: string) => {
-              setTarget(target_uid);
+            handleTarget={(target: any, chat_id: string) => {
+              handleTarget(target, chat_id);
             }}
           />
         </div>
@@ -175,7 +200,7 @@ const Menu = ({ user, friends, setTarget, modalHandler }: { user: any; friends: 
   );
 };
 
-const FriendList = ({ user, friends, setTarget }: { user: any; friends: any[] | null; setTarget: (target_uid: string) => void }) => {
+const FriendList = ({ user, friends, handleTarget }: { user: any; friends: any[] | null; handleTarget: (target: any, chat_id: string) => void }) => {
   if (!friends) return <LoadingFriendsList />;
   // 친구 수락 핸들러
   const acceptReqHandler = async ({ uuid, tuid }: { uuid: any; tuid: any }) => {
@@ -189,7 +214,7 @@ const FriendList = ({ user, friends, setTarget }: { user: any; friends: any[] | 
     <div className="flex flex-col gap-4 overflow-y-scroll">
       {friends.map((item, index) => {
         const isFriendAccepted = item.friends[user.uid]?.isAccept;
-        const isHost = item.friends[user.uid]?.isHost;
+        const isHost = !item.friends[user.uid]?.isHost;
         const statusMessage = isFriendAccepted
           ? item.status_msg
           : isHost
@@ -199,9 +224,9 @@ const FriendList = ({ user, friends, setTarget }: { user: any; friends: any[] | 
         return (
           <div
             key={index}
-            className="w-full flex justify-between items-center gap-4 truncate cursor-pointer"
+            className="w-full flex justify-between items-center gap-2 truncate cursor-pointer"
             onClick={() => {
-              setTarget(item);
+              handleTarget(item, item.friends[user.uid]?.chat_id);
             }}
           >
             {/* 프로필 이미지 */}
@@ -210,14 +235,20 @@ const FriendList = ({ user, friends, setTarget }: { user: any; friends: any[] | 
             </div>
             {/* 이름, 상태메시지 */}
             <div className="w-full flex flex-col items-start truncate">
-              <p className="text-lg text-blue-500 font-semibold">{item.name}</p>
+              <div className="flex items-center w-full">
+                <p className="text-sm text-blue-500 ">{item.name}</p>
+                <p className="text-xs text-gray-500 truncate">#{item.tag}</p>
+              </div>
               <p className="text-xs text-gray-500 w-full truncate">{statusMessage}</p>
             </div>
             {isFriendAccepted ? (
               // 친구 수락된 경우
               <div className="flex flex-col items-end gap-2">
-                <p className="text-xs text-gray-400">10:34 AM</p>
-                <RoundedNumberBadge>12</RoundedNumberBadge>
+                {/* <p className="text-xs text-gray-400">10:34 AM</p> */}
+                {/* 읽지 않은 메시지 */}
+                <RoundedNumberBadge>
+                  <p className="text-xs">{user.friends[item.uid]?.unReadMsg}</p>
+                </RoundedNumberBadge>
               </div>
             ) : isHost ? ( // 친구 요청 중인 경우
               <CustomButtonSmall
@@ -238,28 +269,29 @@ const FriendList = ({ user, friends, setTarget }: { user: any; friends: any[] | 
   );
 };
 
-const Chat = ({ user, target }: { user: any; target: any | null }) => {
-  console.log("@@@@target", target);
+const Chat = ({ user, target, chat_id }: { user: any; target: any | null; chat_id: string | null }) => {
   const [chatData, setChatData] = useState<any | null>(null);
   let hostPrevChatTime = "";
   let targetPrevChatTime = "";
-  const [chat_id, setChat_id] = useState<any | null>(null);
+
   const [msg, setMsg] = useState<string | null>(null);
 
   // target이 정해지면 채팅 내역을 가져오자
   useEffect(() => {
-    if (!target || !target.friends[user.uid]?.isAccept) return;
-
+    if (!target || !target.friends || !target.friends[user.uid]?.isAccept) return;
+    console.log("타겟", target);
     const handleChat = (chat: any) => {
-      setChatData(chat.chat.chat);
-      setChat_id(chat.chat_id);
+      setChatData(chat.chat.chat || null);
     };
 
     const fetchChat = async () => {
-      const unsubscribe = await getChat({ host: user.uid, target: target.uid }, handleChat);
-      console.log("fetchChat");
-      if (unsubscribe) {
-        return unsubscribe;
+      setChatData(null);
+      if (chat_id) {
+        const unsubscribe = await getChat({ host: user.uid, target: target.uid, chat_id: chat_id }, handleChat);
+        console.log("fetchChat");
+        if (unsubscribe) {
+          return unsubscribe;
+        }
       }
       return () => {};
     };
@@ -275,14 +307,18 @@ const Chat = ({ user, target }: { user: any; target: any | null }) => {
     return () => {
       unsubscribe();
     };
-  }, [target, user?.uid]);
+  }, [chat_id, target, user.uid]);
 
   // 메시지 전송 핸들러
   const sendMsg = async () => {
     if (!msg || msg === "") {
       return alert("메시지 내용을 입력해주세요.");
     }
-    await sendChat({ host: user.uid, target: target.uid, chat_id: chat_id, message: msg });
+    if (chat_id) {
+      await sendChat({ host: user.uid, target: target.uid, chat_id: chat_id, message: msg });
+    } else {
+      return alert("오잉, 일시적인 오류입니다. 다시 시도해주세요.");
+    }
     setMsg("");
   };
 
@@ -290,10 +326,10 @@ const Chat = ({ user, target }: { user: any; target: any | null }) => {
     <div className="w-full h-full flex flex-col bg-white p-4">
       {!target ? (
         <NoChat />
-      ) : !target.friends[user.uid].isAccept ? (
-        <p>아직 친구가 아니네요...</p>
+      ) : !target?.friends[user.uid].isAccept ? (
+        <NotFriend />
       ) : !chatData ? (
-        <p>채팅 데이터 로딩 중</p>
+        <LoadingChatData />
       ) : (
         <>
           {/* 헤더 */}
