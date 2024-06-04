@@ -6,7 +6,7 @@ import { CustomButton } from "@/components/ui/Buttons";
 import { getUser } from "@/controller/user";
 import { signInWithGoogle } from "@/db/firebase";
 import { DocumentData } from "firebase/firestore";
-import { initOnline } from "@/controller/chat";
+import { useLeaveObserver } from "@/lib/useAuth";
 
 export default function LandingPage() {
   const isLogin = useAuth();
@@ -18,7 +18,6 @@ export default function LandingPage() {
 
     const handleGetUser = async (user: any) => {
       setUser(user);
-      await initOnline({ host: user.uid });
     };
 
     // 실시간 가져오기
@@ -38,6 +37,7 @@ export default function LandingPage() {
     await signInWithGoogle();
   };
 
+  useLeaveObserver(user?.uid);
   if (isLogin && user) return <HomePage user={user} />;
 
   return (
