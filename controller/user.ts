@@ -153,7 +153,7 @@ export async function acceptRequest({ uuid, tuid, chat_id }: { uuid: any; tuid: 
     // 채팅 데이터 저장
     const acceptRequestMsg = [
       // 친구 요청을 수락했다는 메시지 전달
-      { sender: false, message: null, timestamp: null, read: null },
+      { sender: false, message: null, timestamp: new Date(), read: null },
       { sender: uuid, message: msg, timestamp: new Date(), read: read },
       ...chatData?.chat,
     ];

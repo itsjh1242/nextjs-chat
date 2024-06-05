@@ -64,6 +64,7 @@ export async function getChat({ host, target, chat_id }: { host: string; target:
 
     // 읽었는지를 db에 저장
     await updateDoc(chatDocRef, { chat: updatedChatRead });
+    
     return onSnapshot(chatDocRef, (chatDoc) => {
       if (chatDoc.exists()) {
         callback({ chat_id: chat_id, chat: chatDoc.data() });

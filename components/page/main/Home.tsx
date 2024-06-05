@@ -290,8 +290,6 @@ const FriendList = ({ user, friends, handleTarget }: { user: any; friends: any[]
 const Chat = ({ user, target, chat_id }: { user: any; target: any | null; chat_id: string | null }) => {
   // 채팅 데이터 동기화
   const [chatData, setChatData] = useState<any | null>(null);
-  let hostPrevChatTime = "";
-  let targetPrevChatTime = "";
 
   // 친구요청 수락 시 모달에 타겟 이름, 태그 핸들
   const [acceptFriendReq, setAcceptFriendReq] = useState<boolean>(false);
@@ -320,7 +318,24 @@ const Chat = ({ user, target, chat_id }: { user: any; target: any | null; chat_i
   useEffect(() => {
     if (!target || !target.friends) return;
     const handleChat = (chat: any) => {
-      console.log(chat.chat);
+      let lastMsgDate: string | null = null;
+
+      const updatedChat = chat.chat.chat.reverse().map((item: any) => {
+        const itemMsgDate = item.timestamp?.toDate().toLocaleDateString([], {
+          weekday: "long",
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+        });
+
+        const showDate = (lastMsgDate === null || lastMsgDate !== itemMsgDate) && item.sender !== false;
+        lastMsgDate = itemMsgDate;
+
+        return { ...item, showDate: showDate ? itemMsgDate : false };
+      });
+
+      chat.chat.chat = updatedChat.reverse();
+
       setChatData(chat.chat || null);
     };
 
@@ -390,46 +405,48 @@ const Chat = ({ user, target, chat_id }: { user: any; target: any | null; chat_i
           <div className="h-full flex flex-col-reverse gap-4 overflow-y-auto py-2">
             {Array.isArray(chatData.chat) &&
               chatData.chat.map((item: any, index: number) => {
+                // 메시지 보내는 사람이 False가 아닌 경우에만 보여주기
                 if (item.sender) {
                   // 채팅 시간이 같으면 한 번만 표시하게 하장 ^_^
                   var chatTime = item.timestamp.toDate().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-                  if (user.uid === item.sender) {
-                    if (chatTime === hostPrevChatTime) {
-                      chatTime = "";
-                    } else {
-                      hostPrevChatTime = chatTime;
-                    }
-                    return (
-                      <div key={index} className="flex justify-end gap-2 items-end">
-                        {/* 나 */}
-                        <div className="flex flex-col items-end text-blue-300">
-                          <p className="text-xs">{item.read ? "" : "1"}</p>
+
+                  return (
+                    <div key={index}>
+                      {item.showDate && (
+                        <div className="relative w-full flex justify-center items-center my-4">
+                          <div className="absolute top-1/2 left-0 w-full border" />
+                          <div className="text-gray-500 text-sm bg-white z-30 px-4">{item.showDate}</div>
+                        </div>
+                      )}
+
+                      {user.uid === item.sender ? (
+                        // 호스트 사용자가 보낸 메시지 - 우측표시
+                        <div className="flex justify-end gap-2 items-end">
+                          {/* 나 */}
+                          <div className="flex flex-col items-end text-blue-300">
+                            <p className="text-xs">{item.read ? "" : "1"}</p>
+                            <p className="text-xs text-gray-400">{chatTime}</p>
+                          </div>
+                          <p className="max-w-half bg-blue-500 text-white px-4 py-2 text-sm rounded-tl-xl rounded-tr-xl rounded-bl-xl">{item.message}</p>
+                          <div className="flex justify-center items-center rounded-full overflow-hidden border">
+                            <Image src={user.photoURL || `/user.png`} width={30} height={30} alt="user_icon" />
+                          </div>
+                        </div>
+                      ) : (
+                        // 타겟 사용자가 보낸 메시지 - 좌측 표시
+                        <div className="flex gap-2 justify-start items-end">
+                          {/* 상대방 */}
+                          <div className="flex justify-center items-center rounded-full overflow-hidden border">
+                            <Image src={target.photoURL || `/user.png`} width={30} height={30} alt="user_icon" />
+                          </div>
+                          <p className="max-w-half bg-slate-100 px-4 py-2 text-sm rounded-tr-xl rounded-tl-xl rounded-br-xl">{item.message}</p>
                           <p className="text-xs text-gray-400">{chatTime}</p>
                         </div>
-                        <p className="max-w-half bg-blue-500 text-white px-4 py-2 text-sm rounded-tl-xl rounded-tr-xl rounded-bl-xl">{item.message}</p>
-                        <div className="flex justify-center items-center rounded-full overflow-hidden border">
-                          <Image src={user.photoURL || `/user.png`} width={30} height={30} alt="user_icon" />
-                        </div>
-                      </div>
-                    );
-                  } else {
-                    if (chatTime === targetPrevChatTime) {
-                      chatTime = "";
-                    } else {
-                      targetPrevChatTime = chatTime;
-                    }
-                    return (
-                      <div key={index} className="flex gap-2 justify-start items-end">
-                        {/* 상대방 */}
-                        <div className="flex justify-center items-center rounded-full overflow-hidden border">
-                          <Image src={target.photoURL || `/user.png`} width={30} height={30} alt="user_icon" />
-                        </div>
-                        <p className="max-w-half bg-slate-100 px-4 py-2 text-sm rounded-tr-xl rounded-tl-xl rounded-br-xl">{item.message}</p>
-                        <p className="text-xs text-gray-400">{chatTime}</p>
-                      </div>
-                    );
-                  }
+                      )}
+                    </div>
+                  );
                 } else {
+                  // 보내는 사람이 False일 경우 - 친구 수락 메시지
                   return <FriendAccepted key={index} />;
                 }
               })}
