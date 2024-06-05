@@ -1,76 +1,34 @@
 "use client";
-import { useState, useEffect } from "react";
-
-import { acceptRequest, getFriends, getUserByNameTag, getUserByUid, requestFriend } from "@/controller/user";
 import Image from "next/image";
-import useDevice from "@/lib/useDevice";
-import { useAuth } from "@/lib/useAuth";
-import { signOut } from "@/db/firebase";
-import { getChat, initOnline, sendChat } from "@/controller/chat";
 // ui
-import Mobile from "./Mobile";
-import { NotUser, NotFriend, NoChat } from "../Not";
+import { NotUser, NoChat } from "../Not";
 import { Loading, LoadingChatData, LoadingFriendsList } from "../Loading";
-import { Badge, RoundedNumberBadge } from "@/components/ui/Badge";
+import { RoundedNumberBadge } from "@/components/ui/Badge";
 import { CustomButtonSmall } from "@/components/ui/Buttons";
 import { FriendReqeusted, FriendAccepted } from "@/components/ui/Chat";
-
 // icons
 import { VscSmiley, VscSend, VscUnlock, VscEdit } from "react-icons/vsc";
 import { AcceptFriendRequest, EditProfile, EmojiModal, FindFriend } from "../../ui/Modal";
+import useFriends from "@/lib/useFriends";
+import useChat from "@/lib/useChat";
 
-export default function HomePage({ user }: { user: any }) {
-  const isLogin = useAuth();
-  const mobile = useDevice();
-
-  // 친구 목록 제어 핸들
-  const [friends, setFriends] = useState<any[] | null>(null);
-  // 프로필 수정 모달 제어 핸들
-  const [modalEditProfile, setModalEditProfile] = useState<boolean>(false);
-  // 채팅 대상 핸들
-  const [target, setTarget] = useState<any | null>(null);
-  // 채팅방 핸들
-  const [chat_id, setChatID] = useState<string | null>(null);
-
-  const handleTarget = async (t: any) => {
-    await initOnline({ host: user.uid });
-    await getUserByUid({ uid: t }).then((res) => {
-      setTarget(res);
-      setChatID(res?.friends[user.uid].chat_id);
-    });
-  };
-
-  // 친구 목록 실시간 업데이트
-  useEffect(() => {
-    if (!user) return;
-
-    // 친구 목록 업데이트 함수
-    const handleFriendsUpdate = (updatedFriends: any[]) => {
-      setFriends(updatedFriends);
-    };
-    // 친구 목록을 가져오고 실시간 업데이트
-    const fetchFriends = async () => {
-      const unsubscribe = await getFriends({ uid: user.uid }, handleFriendsUpdate);
-      console.log("fetchFriends");
-      if (unsubscribe) {
-        return () => unsubscribe();
-      }
-    };
-
-    fetchFriends();
-  }, [user, chat_id]);
+export default function HomePage({ userData, isLogin, logout }: { userData: any; isLogin: any; logout: any }) {
+  const user = userData.user;
+  // 실시간 친구 목록
+  const friends = useFriends({ user: user });
+  // 실시간 채팅 데이터
+  const chat = useChat({ user: user });
 
   if (!isLogin) return <NotUser />;
   if (!user) return <Loading />;
-  if (mobile) return <Mobile />;
 
   return (
     <main className="w-screen h-screen m-auto p-12 bg-slate-600">
-      {modalEditProfile ? (
+      {userData.modalEditProfile ? (
         <EditProfile
           user={user}
           close={() => {
-            setModalEditProfile(!modalEditProfile);
+            userData.setModalEditProfile(!userData.modalEditProfile);
           }}
         />
       ) : null}
@@ -79,84 +37,39 @@ export default function HomePage({ user }: { user: any }) {
         <Menu
           user={user}
           friends={friends}
-          handleTarget={(target: any) => {
-            handleTarget(target);
+          logout={logout}
+          targetHandler={(target_uid: any) => {
+            chat?.targetHandler(target_uid);
           }}
           modalHandler={() => {
-            setModalEditProfile(!modalEditProfile);
+            userData.setModalEditProfile(!userData.modalEditProfile);
           }}
         />
         {/* 채팅 화면 */}
-        <Chat user={user} target={target} chat_id={chat_id} />
+        <Chat user={user} chat={chat} />
       </div>
     </main>
   );
 }
 
-const Menu = ({ user, friends, handleTarget, modalHandler }: { user: any; friends: any; handleTarget: (target: any) => void; modalHandler: () => void }) => {
-  // 친구 찾기 - 이름, 태그 이벤트 발생 핸들
-  const [findName, setFindName] = useState<string | null>(null);
-  const [findTag, setFindTag] = useState<string | null>(null);
-
-  // 친구 검색 시 모달창 핸들 && 핸들러
-  const [findModal, setFindModal] = useState<boolean>(false);
-  const findModalHandler = () => {
-    return setFindModal(!findModal);
-  };
-  // 검색한 사용자 정보
-  const [targetData, setTargetData] = useState<any | null>(null);
-  // 검색한 사용자에게 친구 요청을 보냈을 때 모달 핸들
-  const [reqSuc, setReqSuc] = useState<boolean>(false);
-
-  // 친구 찾기 핸들러
-  const findHandler = async () => {
-    if (findName && findTag) {
-      const res = await getUserByNameTag({ uid: user.uid, target: [findName, findTag] });
-      switch (res?.msg) {
-        case "ERR_NOT_USER":
-          return alert("그런 사람은 없습니다.");
-        case "ERR_ALREADY_REQ":
-          return alert("이미 친구요청을 보냈습니다. 기다려보세요.");
-        case "ERR_ALREADY_FRIENDS":
-          return alert("두 분은 이미 친구네요.");
-        case "ERR_SELF":
-          return alert("자기 자신에게 친구 요청을 보내셨나요...?");
-        case "SUC_FIND":
-          setTargetData(res.target);
-          setFindModal(true);
-          setFindName("");
-          setFindTag("");
-          return true;
-        default:
-          return alert("ERR!");
-      }
-    } else {
-      return alert("닉네임과 태그를 모두 입력해주세요.");
-    }
-  };
-
-  // 친구 요청 핸들러
-  const requestHandler = async () => {
-    if (targetData) {
-      const res = await requestFriend({ uid: user.uid, tuid: targetData.uid });
-      if (res) {
-        return setReqSuc(!reqSuc);
-      }
-    } else {
-      return alert("일시적인 에러가 발생했답니다.");
-    }
-  };
-
-  // 로그아웃 핸들러
-  const handleLogOut = (uid: string) => {
-    initOnline({ host: uid }).then(() => {
-      signOut();
-    });
-  };
-
+const Menu = ({
+  user,
+  friends,
+  logout,
+  targetHandler,
+  modalHandler,
+}: {
+  user: any;
+  friends: any;
+  logout: (uid: string) => void;
+  targetHandler: (target_uid: any) => void;
+  modalHandler: () => void;
+}) => {
   return (
     <>
-      {findModal && <FindFriend targetData={targetData} reqSuc={reqSuc} requestHandler={requestHandler} close={findModalHandler} />}
+      {friends.findModal && (
+        <FindFriend targetData={friends.targetData} reqSuc={friends.reqSuc} requestHandler={friends.requestHandler} close={friends.findModalHandler} />
+      )}
       {/* 메뉴 */}
       <div className="flex flex-col gap-4 w-3/12 h-full bg-slate-50 p-3 truncate">
         {/* 프로필 */}
@@ -187,7 +100,7 @@ const Menu = ({ user, friends, handleTarget, modalHandler }: { user: any; friend
           <CustomButtonSmall
             color="gray"
             onClick={() => {
-              handleLogOut(user.uid);
+              logout(user.uid);
             }}
           >
             <div className="flex justify-center items-center gap-2">
@@ -204,25 +117,25 @@ const Menu = ({ user, friends, handleTarget, modalHandler }: { user: any; friend
               <input
                 type="text"
                 placeholder="닉네임"
-                value={findName || ""}
+                value={friends.findName || ""}
                 className="w-full px-3 py-2 border rounded-3xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition text-sm"
                 onChange={(e) => {
-                  setFindName(e.target.value);
+                  friends.setFindName(e.target.value);
                 }}
               />
               <input
                 type="text"
                 placeholder="태그"
-                value={findTag || ""}
+                value={friends.findTag || ""}
                 className="w-full px-3 py-2 border rounded-3xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition text-sm"
                 onChange={(e) => {
-                  setFindTag(e.target.value);
+                  friends.setFindTag(e.target.value);
                 }}
               />
             </div>
             <CustomButtonSmall
               onClick={() => {
-                findHandler();
+                friends.findHandler();
               }}
             >
               검색
@@ -236,8 +149,8 @@ const Menu = ({ user, friends, handleTarget, modalHandler }: { user: any; friend
           <FriendList
             user={user}
             friends={friends}
-            handleTarget={(target: any) => {
-              handleTarget(target);
+            targetHandler={(target_uid: any) => {
+              targetHandler(target_uid);
             }}
           />
         </div>
@@ -246,23 +159,17 @@ const Menu = ({ user, friends, handleTarget, modalHandler }: { user: any; friend
   );
 };
 
-const FriendList = ({ user, friends, handleTarget }: { user: any; friends: any[] | null; handleTarget: (target: any) => void }) => {
-  const [friendsData, setFriendsData] = useState<any[] | null>(null);
-
-  useEffect(() => {
-    setFriendsData(friends);
-  }, [friends]);
-
-  if (!friendsData) return <LoadingFriendsList />;
+const FriendList = ({ user, friends, targetHandler }: { user: any; friends: any | null; targetHandler: (target_uid: any) => void }) => {
+  if (!friends.friends) return <LoadingFriendsList />;
 
   return (
     <div className="w-full flex flex-col gap-4 overflow-y-scroll">
-      {friendsData.map((item, index) => (
+      {friends.friends.map((item: any, index: number) => (
         <div
           key={index}
           className="flex items-center gap-2 truncate cursor-pointer"
           onClick={() => {
-            handleTarget(item.uid);
+            targetHandler(item.uid);
           }}
         >
           <div className="flex justify-center items-center rounded-full overflow-hidden border">
@@ -287,163 +194,71 @@ const FriendList = ({ user, friends, handleTarget }: { user: any; friends: any[]
   );
 };
 
-const Chat = ({ user, target, chat_id }: { user: any; target: any | null; chat_id: string | null }) => {
-  // 채팅 데이터 동기화
-  const [chatData, setChatData] = useState<any | null>(null);
-
-  // 친구요청 수락 시 모달에 타겟 이름, 태그 핸들
-  const [acceptFriendReq, setAcceptFriendReq] = useState<boolean>(false);
-  const [acceptFriendReqTargetName, setAcceptFriendReqTargetName] = useState<string[] | null>(null);
-  const acceptFriendReqModalHandler = () => {
-    setAcceptFriendReq(!acceptFriendReq);
-  };
-  const acceptReqHandler = async ({ uuid, tuid, chat_id }: { uuid: any; tuid: any; chat_id: string }) => {
-    try {
-      const res = await acceptRequest({ uuid, tuid, chat_id });
-      if (res) {
-        setAcceptFriendReqTargetName([res?.name, res?.tag]);
-        acceptFriendReqModalHandler();
-      }
-    } catch (error) {
-      console.error("친구 요청 수락 중 오류 발생:", error);
-    }
-  };
-
-  // 현재 입력창에 입력된 메시지 핸들
-  const [msg, setMsg] = useState<string | null>(null);
-  // 이모티콘 상자 디스플레이 핸들
-  const [displayEmoji, setDisplayEmoji] = useState<boolean>(false);
-
-  // target이 정해지면 채팅 내역을 가져오자
-  useEffect(() => {
-    if (!target || !target.friends) return;
-    const handleChat = (chat: any) => {
-      let lastMsgDate: string | null = null;
-
-      const updatedChat = chat.chat.chat.reverse().map((item: any) => {
-        const itemMsgDate = item.timestamp?.toDate().toLocaleDateString([], {
-          weekday: "long",
-          year: "numeric",
-          month: "long",
-          day: "numeric",
-        });
-
-        const showDate = (lastMsgDate === null || lastMsgDate !== itemMsgDate) && item.sender !== false;
-        lastMsgDate = itemMsgDate;
-
-        return { ...item, showDate: showDate ? itemMsgDate : false };
-      });
-
-      chat.chat.chat = updatedChat.reverse();
-
-      setChatData(chat.chat || null);
-    };
-
-    const fetchChat = async () => {
-      setChatData(null);
-      if (chat_id) {
-        const unsubscribe = await getChat({ host: user.uid, target: target.uid, chat_id: chat_id }, handleChat);
-        console.log("fetchChat");
-        if (unsubscribe) {
-          return unsubscribe;
-        }
-      }
-      return () => {};
-    };
-
-    let unsubscribe: () => void = () => {};
-
-    fetchChat().then((unsub) => {
-      if (unsub) {
-        unsubscribe = unsub;
-      }
-    });
-
-    return () => {
-      unsubscribe();
-    };
-  }, [chat_id, target, user.uid]);
-
-  // 메시지 전송 핸들러
-  const sendMsg = async () => {
-    if (!msg || msg === "") {
-      return alert("메시지 내용을 입력해주세요.");
-    }
-    if (chat_id) {
-      await sendChat({ host: user.uid, target: target.uid, chat_id: chat_id, message: msg });
-    } else {
-      return alert("오잉, 일시적인 오류입니다. 다시 시도해주세요.");
-    }
-    setMsg("");
-  };
-
-  // 이모티콘 입력 창에 삽입 핸들러
-  const inputEmoji = (emoji: any) => {
-    setMsg((prev) => (prev || "") + emoji);
-  };
-
+const Chat = ({ user, chat }: { user: any; chat: any }) => {
   return (
     <div className="w-full h-full flex flex-col bg-white p-4">
-      {!target ? (
+      {!chat.target ? (
         <NoChat />
-      ) : !chatData ? (
+      ) : !chat.chatData ? (
         <LoadingChatData />
       ) : (
         <>
-          {acceptFriendReq && acceptFriendReqTargetName && <AcceptFriendRequest targetName={acceptFriendReqTargetName} close={acceptFriendReqModalHandler} />}
+          {chat.acceptFriendReq && chat.acceptFriendReqTargetName && (
+            <AcceptFriendRequest targetName={chat.acceptFriendReqTargetName} close={chat.acceptFriendReqModalHandler} />
+          )}
           {/* 헤더 */}
           <div className="flex justify-start items-center gap-4 border-b pb-2">
             <div className="flex justify-center items-center rounded-full overflow-hidden border">
-              <Image src={target.photoURL || `/user.png`} width={60} height={60} alt="user_icon" />
+              <Image src={chat.target.photoURL || `/user.png`} width={60} height={60} alt="user_icon" />
             </div>
             <div className="w-full flex flex-col items-start">
-              <p className="text-xl font-semibold">{target.name} </p>
-              <p className="text-xs text-gray-500 w-full truncate">{target.status_msg}</p>
+              <p className="text-xl font-semibold">{chat.target.name} </p>
+              <p className="text-xs text-gray-500 w-full truncate">{chat.target.status_msg}</p>
             </div>
           </div>
           {/* 채팅 박스 */}
           <div className="h-full flex flex-col-reverse gap-4 overflow-y-auto py-2">
-            {Array.isArray(chatData.chat) &&
-              chatData.chat.map((item: any, index: number) => {
+            {Array.isArray(chat.chatData.chat) &&
+              chat.chatData.chat.map((item: any, index: number) => {
                 // 메시지 보내는 사람이 False가 아닌 경우에만 보여주기
                 if (item.sender) {
                   // 채팅 시간이 같으면 한 번만 표시하게 하장 ^_^
                   var chatTime = item.timestamp.toDate().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-
                   return (
-                    <div key={index}>
-                      {item.showDate && (
-                        <div className="relative w-full flex justify-center items-center my-4">
-                          <div className="absolute top-1/2 left-0 w-full border" />
-                          <div className="text-gray-500 text-sm bg-white z-30 px-4">{item.showDate}</div>
-                        </div>
-                      )}
-
-                      {user.uid === item.sender ? (
-                        // 호스트 사용자가 보낸 메시지 - 우측표시
-                        <div className="flex justify-end gap-2 items-end">
-                          {/* 나 */}
-                          <div className="flex flex-col items-end text-blue-300">
-                            <p className="text-xs">{item.read ? "" : "1"}</p>
-                            <p className="text-xs text-gray-400">{chatTime}</p>
+                    item.message && (
+                      <div key={index}>
+                        {item.showDate && (
+                          <div className="relative w-full flex justify-center items-center my-4">
+                            <div className="absolute top-1/2 left-0 w-full border" />
+                            <div className="text-gray-500 text-sm bg-white z-30 px-4">{item.showDate}</div>
                           </div>
-                          <p className="max-w-half bg-blue-500 text-white px-4 py-2 text-sm rounded-tl-xl rounded-tr-xl rounded-bl-xl">{item.message}</p>
-                          <div className="flex justify-center items-center rounded-full overflow-hidden border">
-                            <Image src={user.photoURL || `/user.png`} width={30} height={30} alt="user_icon" />
+                        )}
+                        {user.uid === item.sender ? (
+                          // 호스트 사용자가 보낸 메시지 - 우측표시
+                          <div className="flex justify-end gap-2 items-end">
+                            {/* 나 */}
+                            <div className="flex flex-col items-end text-blue-300">
+                              <p className="text-xs">{item.read ? "" : "1"}</p>
+                              <p className="text-xs text-gray-400">{item.showTime && chatTime}</p>
+                            </div>
+                            <p className="max-w-half bg-blue-500 text-white px-4 py-2 text-sm rounded-tl-xl rounded-tr-xl rounded-bl-xl">{item.message}</p>
+                            <div className="flex justify-center items-center rounded-full overflow-hidden border">
+                              <Image src={user.photoURL || `/user.png`} width={30} height={30} alt="user_icon" />
+                            </div>
                           </div>
-                        </div>
-                      ) : (
-                        // 타겟 사용자가 보낸 메시지 - 좌측 표시
-                        <div className="flex gap-2 justify-start items-end">
-                          {/* 상대방 */}
-                          <div className="flex justify-center items-center rounded-full overflow-hidden border">
-                            <Image src={target.photoURL || `/user.png`} width={30} height={30} alt="user_icon" />
+                        ) : (
+                          // 타겟 사용자가 보낸 메시지 - 좌측 표시
+                          <div className="flex gap-2 justify-start items-end">
+                            {/* 상대방 */}
+                            <div className="flex justify-center items-center rounded-full overflow-hidden border">
+                              <Image src={chat.target.photoURL || `/user.png`} width={30} height={30} alt="user_icon" />
+                            </div>
+                            <p className="max-w-half bg-slate-100 px-4 py-2 text-sm rounded-tr-xl rounded-tl-xl rounded-br-xl">{item.message}</p>
+                            <p className="text-xs text-gray-400">{item.showTime && chatTime}</p>
                           </div>
-                          <p className="max-w-half bg-slate-100 px-4 py-2 text-sm rounded-tr-xl rounded-tl-xl rounded-br-xl">{item.message}</p>
-                          <p className="text-xs text-gray-400">{chatTime}</p>
-                        </div>
-                      )}
-                    </div>
+                        )}
+                      </div>
+                    )
                   );
                 } else {
                   // 보내는 사람이 False일 경우 - 친구 수락 메시지
@@ -451,33 +266,33 @@ const Chat = ({ user, target, chat_id }: { user: any; target: any | null; chat_i
                 }
               })}
           </div>
-          {!chatData.isAccept && user.uid === chatData.target && (
-            <FriendReqeusted onClick={() => acceptReqHandler({ uuid: user.uid, tuid: target.uid, chat_id: chatData.chat_id })} />
+          {!chat.chatData.isAccept && user.uid === chat.chatData.target && (
+            <FriendReqeusted onClick={() => chat.acceptReqHandler({ uuid: user.uid, tuid: chat.target.uid, chatID: chat.chatID })} />
           )}
-          <div className={`flex justify-center items-center pt-2 h-fit border-t-2 ${!chatData.isAccept ? "pointer-events-none" : ""}`}>
+          <div className={`flex justify-center items-center pt-2 h-fit ${!chat.chatData.isAccept ? "pointer-events-none" : ""}`}>
             <div className="w-full h-fit flex justify-between items-center gap-2 rounded-full bg-slate-100 px-4 py-2">
               <input
                 type="text"
-                placeholder={!chatData.isAccept ? "친구가 되기 전에 채팅을 보낼 수 없어요." : "채팅을 입력하세요"}
-                value={msg || ""}
+                placeholder={!chat.chatData.isAccept ? "친구가 되기 전에 채팅을 보낼 수 없어요." : "채팅을 입력하세요"}
+                value={chat.msg || ""}
                 onChange={(e) => {
-                  setMsg(e.target.value);
+                  chat.setMsg(e.target.value);
                 }}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
-                    sendMsg();
+                    chat.sendMsg();
                   }
                 }}
                 className="bg-transparent outline-none w-10/12"
               />
               <div className="relative flex justify-end items-center w-1/12">
-                {displayEmoji && <EmojiModal onClick={(emoji: any) => inputEmoji(emoji)} />}
+                {chat.displayEmoji && <EmojiModal onClick={(emoji: any) => chat.inputEmoji({ emoji: emoji, setMsg: chat.setMsg })} />}
                 <VscSmiley
                   size={24}
                   color="#6D6D6D"
                   className="cursor-pointer"
                   onClick={() => {
-                    setDisplayEmoji(!displayEmoji);
+                    chat.setDisplayEmoji(!chat.displayEmoji);
                   }}
                 />
               </div>
@@ -486,7 +301,7 @@ const Chat = ({ user, target, chat_id }: { user: any; target: any | null; chat_i
                   size={24}
                   color="#ffffff"
                   onClick={() => {
-                    sendMsg();
+                    chat.sendMsg();
                   }}
                 />
               </div>

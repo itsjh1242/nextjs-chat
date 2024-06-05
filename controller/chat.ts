@@ -64,7 +64,7 @@ export async function getChat({ host, target, chat_id }: { host: string; target:
 
     // 읽었는지를 db에 저장
     await updateDoc(chatDocRef, { chat: updatedChatRead });
-    
+
     return onSnapshot(chatDocRef, (chatDoc) => {
       if (chatDoc.exists()) {
         callback({ chat_id: chat_id, chat: chatDoc.data() });
@@ -76,47 +76,49 @@ export async function getChat({ host, target, chat_id }: { host: string; target:
   }
 }
 
-export async function sendChat({ host, target, chat_id, message }: { host: string; target: string; chat_id: string; message: any }) {
+export async function sendChat({ uid, tuid, chatID, message }: { uid: string; tuid: string; chatID: string; message: any }) {
   try {
-    const isOnline = await isTargetOnlineOnChatRoom({ uid: host, tuid: target });
+    const isOnline = await isTargetOnlineOnChatRoom({ uid: uid, tuid: tuid });
     // 친구 신청한 사람이 host가 되는 구조 ^_^
     // 실시간으로 채팅 데이터를 받아올거라 여기서는 db에 메시지 저장만 하자
-    const chatDocRef = doc(chatCollection, chat_id);
+    const chatDocRef = doc(chatCollection, chatID);
     const chatDoc = await getDoc(chatDocRef);
     const chatData = chatDoc.data();
 
     // 호스트, 타겟 데이터
-    const HostDocRef = doc(userCollection, host);
+    const HostDocRef = doc(userCollection, uid);
     const HostDoc = await getDoc(HostDocRef);
     const HostData = HostDoc.data();
 
-    const targetDocRef = doc(userCollection, target);
+    const targetDocRef = doc(userCollection, tuid);
     const targetDoc = await getDoc(targetDocRef);
     const targetData = targetDoc.data();
 
+    // 채팅 데이터 저장
+    const updatedChat = [{ sender: uid, message: message, timestamp: new Date(), read: isOnline }, ...chatData?.chat];
+    await updateDoc(chatDocRef, { chat: updatedChat });
+
     let updatedMessageSelf = {
-      ...HostData?.friends[target],
+      ...HostData?.friends[tuid],
       latestMsg: message,
       lastMsgAt: new Date(),
     };
 
     let updatedMessageTarget = {
-      ...targetData?.friends[host],
+      ...targetData?.friends[uid],
       latestMsg: message,
       lastMsgAt: new Date(),
-      unReadMsg: isOnline ? 0 : targetData?.friends[host]?.unReadMsg + 1,
+      unReadMsg: isOnline ? 0 : targetData?.friends[uid]?.unReadMsg + 1,
     };
 
     await updateDoc(HostDocRef, {
-      [`friends.${target}`]: updatedMessageSelf,
+      [`friends.${tuid}`]: updatedMessageSelf,
     });
     await updateDoc(targetDocRef, {
-      [`friends.${host}`]: updatedMessageTarget,
+      [`friends.${uid}`]: updatedMessageTarget,
     });
 
-    // 채팅 데이터 저장
-    const updatedChat = [{ sender: host, message: message, timestamp: new Date(), read: isOnline }, ...chatData?.chat];
-    await updateDoc(chatDocRef, { chat: updatedChat });
+    console.log("채팅 데이터가 성공적으로 저장되었습니다.");
   } catch (error) {
     console.error(error);
   }

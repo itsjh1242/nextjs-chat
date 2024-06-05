@@ -1,45 +1,24 @@
 "use client";
-import { useState, useEffect } from "react";
-import { useAuth } from "@/lib/useAuth";
+import { handleLogin, useAuth, handleLogOut, useLeaveObserver } from "@/lib/useAuth";
+import useDevice from "@/lib/useDevice";
+
+import Mobile from "./Mobile";
 import HomePage from "@/components/page/main/Home";
+import { useUser } from "@/lib/useUser";
 import { CustomButton } from "@/components/ui/Buttons";
-import { getUser } from "@/controller/user";
-import { signInWithGoogle } from "@/db/firebase";
-import { DocumentData } from "firebase/firestore";
-import { useLeaveObserver } from "@/lib/useAuth";
 
 export default function LandingPage() {
   const isLogin = useAuth();
-  const [user, setUser] = useState<DocumentData | null>(null);
+  const mobile = useDevice();
+  const userData = useUser();
+  useLeaveObserver(userData.user?.uid);
 
-  // 사용자 정보 가져오기
-  useEffect(() => {
-    if (!isLogin) return;
+  if (!isLogin && !userData.user) return <LoginForm />;
+  if (mobile) return <Mobile userData={userData} isLogin={isLogin} logout={handleLogOut} />;
+  else return <HomePage userData={userData} isLogin={isLogin} logout={handleLogOut} />;
+}
 
-    const handleGetUser = async (user: any) => {
-      setUser(user);
-    };
-
-    // 실시간 가져오기
-    const fetchUser = async () => {
-      const unsubscribe = await getUser(handleGetUser);
-      console.log("fetchUser");
-      if (unsubscribe) {
-        return () => unsubscribe();
-      }
-    };
-
-    fetchUser();
-  }, [isLogin]);
-
-  // 구글 로그인
-  const handleLogin = async () => {
-    await signInWithGoogle();
-  };
-
-  useLeaveObserver(user?.uid);
-  if (isLogin && user) return <HomePage user={user} />;
-
+const LoginForm = () => {
   return (
     <main className="min-h-screen bg-gray-100 flex flex-col items-center justify-center py-12">
       <h1 className="text-4xl font-bold animate-fade-in-up">Chat</h1>
@@ -49,4 +28,4 @@ export default function LandingPage() {
       </div>
     </main>
   );
-}
+};

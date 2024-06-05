@@ -1,7 +1,19 @@
 import { useEffect, useState } from "react";
 import { User } from "firebase/auth";
-import { auth } from "@/db/firebase";
+import { auth, signInWithGoogle, signOut } from "@/db/firebase";
 import { initOnline } from "@/controller/chat";
+
+// 구글 로그인
+export const handleLogin = async () => {
+  await signInWithGoogle();
+};
+
+// 로그아웃
+export const handleLogOut = (uid: string) => {
+  initOnline({ host: uid }).then(() => {
+    signOut();
+  });
+};
 
 export const useAuth = () => {
   const [user, setUser] = useState<User | null>(null);

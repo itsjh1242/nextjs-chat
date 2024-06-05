@@ -8,11 +8,11 @@ export function NotUser() {
     await signInWithGoogle();
   };
   return (
-    <div className="w-screen h-screen flex flex-col justify-center items-center">
+    <div className="w-screen h-screen flex flex-col justify-center items-center ">
       <Emoji_WomanGesturingNoMediumLightSkinTone />
-      <p className="text-3xl mb-4 animate-fade-in-up">로그인을 안하셨네요.</p>
-      <p className="text-lg animate-fade-in-up">로그인 된 사용자만 채팅할 수 있어요.</p>
-      <CustomButton onClick={handleLogin}>로그인하기</CustomButton>
+      <p className="text-3xl mb-4 animate-fade-in-up">정보를 다시 가져올게요.</p>
+      <p className="text-lg animate-fade-in-up mb-4">이 화면이 계속 나오나요? 그럼 다시 로그인하세요.</p>
+      <CustomButton onClick={handleLogin}>다시 로그인하기</CustomButton>
     </div>
   );
 }

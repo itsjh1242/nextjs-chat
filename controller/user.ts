@@ -41,7 +41,7 @@ export async function getUserByNameTag({ uid, target }: { uid: string; target: s
     const [name, tag] = target;
     const q = query(userCollection, where("name", "==", name), where("tag", "==", tag));
     const querySnapshot = await getDocs(q);
-    const tuid = querySnapshot.docs[0].id;
+    const tuid = querySnapshot.docs[0]?.id;
     // 요청을 보낼 대상이 db에 존재하지 않을 때
     if (querySnapshot.size === 0) {
       return { status: false, msg: "ERR_NOT_USER" };
@@ -121,10 +121,10 @@ export async function requestFriend({ uid, tuid }: { uid: string; tuid: string }
 }
 
 // 친구 수락
-export async function acceptRequest({ uuid, tuid, chat_id }: { uuid: any; tuid: any; chat_id: string }) {
+export async function acceptRequest({ uid, tuid, chatID }: { uid: any; tuid: any; chatID: string }) {
   try {
     // 호스트 uid
-    const hostDocRef = doc(userCollection, uuid);
+    const hostDocRef = doc(userCollection, uid);
     const hostDoc = await getDoc(hostDocRef);
     const hostData = hostDoc.data();
     // 타겟 uid
@@ -133,12 +133,22 @@ export async function acceptRequest({ uuid, tuid, chat_id }: { uuid: any; tuid: 
     const targetData = targetDoc.data();
 
     // 채팅방 가져오기
-    const chatDocRef = doc(chatCollection, chat_id);
+    const chatDocRef = doc(chatCollection, chatID);
     const chatDoc = await getDoc(chatDocRef);
     const chatData = chatDoc.data();
 
     const msg = hostData?.name + "님이 친구 요청을 수락했습니다.";
-    const read = await isTargetOnlineOnChatRoom({ uid: uuid, tuid: tuid });
+    const read = await isTargetOnlineOnChatRoom({ uid: uid, tuid: tuid });
+
+    // 채팅 데이터 저장
+    const acceptRequestMsg = [
+      // 친구 요청을 수락했다는 메시지 전달
+      { sender: uid, message: null, timestamp: new Date(), read: null },
+      { sender: uid, message: msg, timestamp: new Date(), read: read },
+      ...chatData?.chat,
+    ];
+    await updateDoc(chatDocRef, { isAccept: true, chat: acceptRequestMsg });
+
     // 호스트 친구 목록에 업데이트
     const updatedHostFriends = { ...hostData?.friends, [tuid]: { ...hostData?.friends[tuid], isAccept: true, latestMsg: msg, lastMsgAt: new Date() } };
     await updateDoc(hostDocRef, { friends: updatedHostFriends });
@@ -146,18 +156,9 @@ export async function acceptRequest({ uuid, tuid, chat_id }: { uuid: any; tuid: 
     // 타겟 친구 목록에 업데이트
     const updatedTargetFriends = {
       ...targetData?.friends,
-      [uuid]: { ...targetData?.friends[uuid], isAccept: true, latestMsg: msg, lastMsgAt: new Date(), unReadMsg: read ? 0 : 1 },
+      [uid]: { ...targetData?.friends[uid], isAccept: true, latestMsg: msg, lastMsgAt: new Date(), unReadMsg: read ? 0 : 1 },
     };
     await updateDoc(targetDocRef, { friends: updatedTargetFriends });
-
-    // 채팅 데이터 저장
-    const acceptRequestMsg = [
-      // 친구 요청을 수락했다는 메시지 전달
-      { sender: false, message: null, timestamp: new Date(), read: null },
-      { sender: uuid, message: msg, timestamp: new Date(), read: read },
-      ...chatData?.chat,
-    ];
-    await updateDoc(chatDocRef, { isAccept: true, chat: acceptRequestMsg });
 
     return { friends: updatedTargetFriends, name: targetData?.name, tag: targetData?.tag };
   } catch (error) {
