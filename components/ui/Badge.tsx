@@ -16,5 +16,9 @@ export const Badge = (props: BadgeInterface) => {
 export const RoundedNumberBadge = (props: BadgeInterface) => {
   const { className, children, color } = props;
   const colors = cs({ color: color || "blue" });
-  return <div className={cn(`max-w-10 px-2 py-1 rounded-full text-white text-xs truncate`, className, colors.bg)}>{children}</div>;
+  return (
+    <div className={cn(`w-fit min-w-5 h-5 flex items-center justify-center rounded-full text-white text-xs`, className, colors.bg)}>
+      <p className="w-fit h-fit p-1">{children}</p>
+    </div>
+  );
 };

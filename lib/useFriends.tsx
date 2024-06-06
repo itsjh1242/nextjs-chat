@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { getFriends, getUserByNameTag, requestFriend } from "@/controller/user";
 
 export default function useFriends({ user }: { user: any }) {
-  console.log("@@@@", user);
   // 친구 목록
   const [friends, setFriends] = useState<any[] | null>(null);
   // 친구 찾기 - 이름, 태그 이벤트 발생 핸들

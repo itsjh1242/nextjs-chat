@@ -1,18 +1,22 @@
 "use client";
 import Image from "next/image";
+import useDevice from "@/lib/useDevice";
+import useFriends from "@/lib/useFriends";
+import useChat from "@/lib/useChat";
 // ui
+import Mobile from "./Mobile";
 import { NotUser, NoChat } from "../Not";
 import { Loading, LoadingChatData, LoadingFriendsList } from "../Loading";
 import { RoundedNumberBadge } from "@/components/ui/Badge";
 import { CustomButtonSmall } from "@/components/ui/Buttons";
 import { FriendReqeusted, FriendAccepted } from "@/components/ui/Chat";
+
 // icons
-import { VscSmiley, VscSend, VscUnlock, VscEdit } from "react-icons/vsc";
+import { VscSmiley, VscSend, VscUnlock, VscEdit, VscSearch } from "react-icons/vsc";
 import { AcceptFriendRequest, EditProfile, EmojiModal, FindFriend } from "../../ui/Modal";
-import useFriends from "@/lib/useFriends";
-import useChat from "@/lib/useChat";
 
 export default function HomePage({ userData, isLogin, logout }: { userData: any; isLogin: any; logout: any }) {
+  const mobile = useDevice();
   const user = userData.user;
   // 실시간 친구 목록
   const friends = useFriends({ user: user });
@@ -21,6 +25,8 @@ export default function HomePage({ userData, isLogin, logout }: { userData: any;
 
   if (!isLogin) return <NotUser />;
   if (!user) return <Loading />;
+  if (mobile)
+    return <Mobile user={user} isLogin={isLogin} logout={logout} chat={chat} friends={friends} icon={{ VscSmiley, VscSend, VscUnlock, VscEdit, VscSearch }} />;
 
   return (
     <main className="w-screen h-screen m-auto p-12 bg-slate-600">
@@ -111,7 +117,7 @@ const Menu = ({
         </div>
         {/* 친구 찾기 - 아이디 검색 */}
         <div className="flex flex-col gap-2 border-b pb-4">
-          <label className="text-xs font-semibold text-gray-600 pl-2">친구 찾기</label>
+          <label className="text-xs text-gray-600 pl-2">친구 찾기</label>
           <div className="flex gap-2">
             <div className="flex gap-2">
               <input
@@ -144,7 +150,7 @@ const Menu = ({
         </div>
 
         {/* 친구 목록 */}
-        <label className="text-xs font-semibold text-gray-600 pl-2">친구 목록</label>
+        <label className="text-xs text-gray-600 pl-2">친구 목록</label>
         <div className="w-full h-full overflow-y-scroll">
           <FriendList
             user={user}
@@ -177,7 +183,7 @@ const FriendList = ({ user, friends, targetHandler }: { user: any; friends: any 
           </div>
           <div className="w-full flex flex-col truncate">
             <div className="flex items-center w-full">
-              <p className="text-blue-500 ">{item.name}</p>
+              <p className="text-blue-500">{item.name}</p>
               <p className="text-sm text-gray-500 truncate">#{item.tag}</p>
             </div>
             <p className="text-xs text-gray-500 w-full truncate">{user.friends[item.uid]?.latestMsg}</p>

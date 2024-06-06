@@ -76,3 +76,14 @@ export const Emoji_HandGesturesWavingHandLight = ({ w, h }: { w?: number; h?: nu
     />
   );
 };
+
+export const Emoji_LoveLetter = ({ w, h }: { w?: number; h?: number }) => {
+  return (
+    <Image
+      src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Smilies/Love%20Letter.png"
+      alt="Love Letter"
+      width={w || 256}
+      height={h || 256}
+    />
+  );
+};
