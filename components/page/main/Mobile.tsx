@@ -1,25 +1,47 @@
 import Image from "next/image";
 import { LoadingFriendsList } from "../Loading";
+// ui
 import { RoundedNumberBadge } from "@/components/ui/Badge";
+import { CustomButton, CustomButtonSmall } from "@/components/ui/Buttons";
+// modal
+import { FindFriend, MobileSearch, Modal } from "@/components/ui/Modal";
+
 export default function Mobile({ user, isLogin, logout, chat, friends, icon }: { user: any; isLogin: any; logout: any; chat: any; friends: any; icon: any }) {
+  // 검색창 모달
+  const searchModal = MobileSearch({ friends: { friends } });
   return (
     <main className="w-screen min-h-screen flex flex-col justify-start items-center px-3 py-6">
+      {/* 친구 검색 모달 */}
+      {searchModal.show ? searchModal?.modal : null}
+      {/* 친구 검색 성공 시 모달 */}
+      {friends.findModal && (
+        <FindFriend
+          targetData={friends.targetData}
+          reqSuc={friends.reqSuc}
+          requestHandler={friends.requestHandler}
+          close={friends.findModalHandler}
+          isMobile={true}
+        />
+      )}
       {/* 헤더 */}
       <div className="w-full flex justify-between items-center mb-4">
         <p className="text-2xl font-semibold">채팅</p>
         <div className="flex gap-3">
           {/* 친구 찾기 */}
-          <div>
-            <icon.VscSearch size={24} />
-          </div>
-          {/* 내정보 수정 */}
-          <div>
-            <icon.VscEdit size={24} />
-          </div>
+          <CustomButtonSmall
+            className="flex justify-center items-center gap-2"
+            onClick={() => {
+              searchModal?.setShow(true);
+            }}
+          >
+            <icon.VscSearch size={20} />
+            <p>검색</p>
+          </CustomButtonSmall>
           {/* 로그아웃 */}
-          <div>
-            <icon.VscUnlock size={24} />
-          </div>
+          <CustomButtonSmall className="flex justify-center items-center gap-2" color="gray">
+            <icon.VscUnlock size={20} />
+            <p>로그아웃</p>
+          </CustomButtonSmall>
         </div>
       </div>
       {/* 내 프로필 */}

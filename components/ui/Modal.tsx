@@ -6,7 +6,7 @@ import { CustomButton } from "@/components/ui/Buttons";
 import { isExistName, saveProfile } from "@/controller/user";
 import { Emoji_ClappingHandsLightSkin } from "@/components/ui/Emoji";
 
-const Modal = ({ className, children, onClick }: { className?: string; children?: React.ReactNode | null; onClick?: () => void }) => {
+export const Modal = ({ className, children, onClick }: { className?: string; children?: React.ReactNode | null; onClick?: () => void }) => {
   return (
     <div className="fixed top-0 left-0 w-full h-full flex items-center justify-center z-50">
       <div className="absolute w-full h-full bg-gray-500 opacity-50"></div>
@@ -27,6 +27,68 @@ const Modal = ({ className, children, onClick }: { className?: string; children?
       </div>
     </div>
   );
+};
+
+export const MobileSearch = ({ friends }: { friends: any }) => {
+  const [show, setShow] = useState<boolean>(false);
+  const [msg, setMsg] = useState<string | null>(null);
+  const closeHandler = () => {
+    setShow(false);
+    setMsg(null);
+  };
+  const findHandler = async () => {
+    const res = await friends.friends.findHandler();
+    if (res) {
+      setMsg(res);
+    } else {
+      setShow(false);
+    }
+  };
+  const modal = (
+    <Modal
+      className="w-full bg-white rounded-xl shadow-xl mx-2"
+      onClick={() => {
+        closeHandler();
+      }}
+    >
+      <div className="flex flex-col gap-4">
+        <p className="text-xl font-semibold">친구 검색</p>
+        <div>
+          <label className="text-gray-500 text-sm pl-1 pb-1">이름</label>
+          <input
+            type="text"
+            placeholder="이름을 입력하세요."
+            value={friends.friends.findName || ""}
+            className="w-full px-3 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition text-sm"
+            onChange={(e) => {
+              friends.friends.setFindName(e.target.value);
+            }}
+          />
+        </div>
+        <div>
+          <label className="text-gray-500 text-sm pl-1 pb-1">태그</label>
+          <input
+            type="text"
+            placeholder="태그를 입력하세요."
+            value={friends.friends.findTag || ""}
+            className="w-full px-3 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition text-sm"
+            onChange={(e) => {
+              friends.friends.setFindTag(e.target.value);
+            }}
+          />
+        </div>
+        <p className="text-red-500 font-semibold">{msg}</p>
+        <CustomButton
+          onClick={() => {
+            findHandler();
+          }}
+        >
+          검색
+        </CustomButton>
+      </div>
+    </Modal>
+  );
+  return { show: show, setShow: setShow, modal: modal };
 };
 
 export const AcceptFriendRequest = ({ targetName, close }: { targetName: string[]; close: () => void }) => {
@@ -57,19 +119,21 @@ export const FindFriend = ({
   reqSuc,
   requestHandler,
   close,
+  isMobile,
 }: {
   targetData?: any | null;
   reqSuc: boolean;
   requestHandler: () => void;
   close: () => void;
+  isMobile: boolean;
 }) => {
-  const [preventDoubleClick, setPReventDoubleClick] = useState<boolean>(true);
+  const [preventDoubleClick, setPreventDoubleClick] = useState<boolean>(true);
   const acceptHandle = () => {
-    setPReventDoubleClick(false);
+    setPreventDoubleClick(false);
     return requestHandler();
   };
   return (
-    <Modal className="w-1/2 bg-white rounded-xl shadow-xl p-6">
+    <Modal className={`bg-white rounded-xl shadow-xl ${isMobile ? "w-full mx-2" : "w-1/2  p-6"}`}>
       {reqSuc ? (
         <div className="flex flex-col justify-center items-center gap-4">
           <Emoji_ClappingHandsLightSkin />
@@ -86,7 +150,7 @@ export const FindFriend = ({
       ) : (
         <>
           <div className="border-b mb-4 pb-2">
-            <p className="text-2xl font-semibold text-gray-800">찾으시는 사람이 맞나요?</p>
+            <p className={`font-semibold text-gray-800 ${isMobile ? "text-lg" : "text-2xl  "}`}>찾으시는 사람이 맞나요?</p>
           </div>
           <div className="w-full flex flex-col justify-center items-center gap-4 truncate mb-4 pb-2">
             <div className="flex justify-center items-center rounded-full overflow-hidden border-4 border-gray-200 shadow-md">

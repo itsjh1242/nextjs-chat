@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { getFriends, getUserByNameTag, requestFriend } from "@/controller/user";
+import { ErrMsg } from "./utils";
 
 export default function useFriends({ user }: { user: any }) {
   // 친구 목록
@@ -21,27 +22,18 @@ export default function useFriends({ user }: { user: any }) {
   const findHandler = async () => {
     if (findName && findTag) {
       const res = await getUserByNameTag({ uid: user?.uid, target: [findName, findTag] });
-      console.log(res?.msg);
-      switch (res?.msg) {
-        case "ERR_NOT_USER":
-          return alert("그런 사람은 없습니다.");
-        case "ERR_ALREADY_REQ":
-          return alert("이미 친구요청을 보냈습니다. 기다려보세요.");
-        case "ERR_ALREADY_FRIENDS":
-          return alert("두 분은 이미 친구네요.");
-        case "ERR_SELF":
-          return alert("자기 자신에게 친구 요청을 보내셨나요...?");
-        case "SUC_FIND":
-          setTargetData(res.target);
-          setFindModal(true);
-          setFindName("");
-          setFindTag("");
-          return true;
-        default:
-          return alert("ERR!");
+      const result = ErrMsg(res?.msg);
+      if (result.status) {
+        setTargetData(res?.target);
+        setFindModal(true);
+        setFindName("");
+        setFindTag("");
+        return null;
+      } else {
+        return result.msg;
       }
     } else {
-      return alert("닉네임과 태그를 모두 입력해주세요.");
+      return "닉네임과 태그를 모두 입력해주세요.";
     }
   };
 

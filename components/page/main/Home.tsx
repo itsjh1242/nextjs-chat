@@ -71,10 +71,16 @@ const Menu = ({
   targetHandler: (target_uid: any) => void;
   modalHandler: () => void;
 }) => {
+  const findHandler = async () => {
+    const res = await friends?.findHandler();
+    if (res) {
+      return alert(res);
+    }
+  };
   return (
     <>
       {friends.findModal && (
-        <FindFriend targetData={friends.targetData} reqSuc={friends.reqSuc} requestHandler={friends.requestHandler} close={friends.findModalHandler} />
+        <FindFriend targetData={friends.targetData} reqSuc={friends.reqSuc} requestHandler={friends.requestHandler} close={friends.findModalHandler} isMobile={false} />
       )}
       {/* 메뉴 */}
       <div className="flex flex-col gap-4 w-3/12 h-full bg-slate-50 p-3 truncate">
@@ -141,7 +147,7 @@ const Menu = ({
             </div>
             <CustomButtonSmall
               onClick={() => {
-                friends.findHandler();
+                findHandler();
               }}
             >
               검색
