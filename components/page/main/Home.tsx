@@ -12,7 +12,7 @@ import { CustomButtonSmall } from "@/components/ui/Buttons";
 import { FriendReqeusted, FriendAccepted } from "@/components/ui/Chat";
 
 // icons
-import { VscSmiley, VscSend, VscUnlock, VscEdit, VscSearch } from "react-icons/vsc";
+import { VscSmiley, VscSend, VscUnlock, VscEdit, VscSearch, VscChevronLeft } from "react-icons/vsc";
 import { AcceptFriendRequest, EditProfile, EmojiModal, FindFriend } from "../../ui/Modal";
 
 export default function HomePage({ userData, isLogin, logout }: { userData: any; isLogin: any; logout: any }) {
@@ -26,7 +26,16 @@ export default function HomePage({ userData, isLogin, logout }: { userData: any;
   if (!isLogin) return <NotUser />;
   if (!user) return <Loading />;
   if (mobile)
-    return <Mobile user={user} isLogin={isLogin} logout={logout} chat={chat} friends={friends} icon={{ VscSmiley, VscSend, VscUnlock, VscEdit, VscSearch }} />;
+    return (
+      <Mobile
+        userData={userData}
+        isLogin={isLogin}
+        logout={logout}
+        chat={chat}
+        friends={friends}
+        icon={{ VscSmiley, VscSend, VscUnlock, VscEdit, VscSearch, VscChevronLeft }}
+      />
+    );
 
   return (
     <main className="w-screen h-screen m-auto p-12 bg-slate-600">
@@ -80,7 +89,13 @@ const Menu = ({
   return (
     <>
       {friends.findModal && (
-        <FindFriend targetData={friends.targetData} reqSuc={friends.reqSuc} requestHandler={friends.requestHandler} close={friends.findModalHandler} isMobile={false} />
+        <FindFriend
+          targetData={friends.targetData}
+          reqSuc={friends.reqSuc}
+          requestHandler={friends.requestHandler}
+          close={friends.findModalHandler}
+          isMobile={false}
+        />
       )}
       {/* 메뉴 */}
       <div className="flex flex-col gap-4 w-3/12 h-full bg-slate-50 p-3 truncate">

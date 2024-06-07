@@ -91,14 +91,16 @@ export const MobileSearch = ({ friends }: { friends: any }) => {
   return { show: show, setShow: setShow, modal: modal };
 };
 
-export const AcceptFriendRequest = ({ targetName, close }: { targetName: string[]; close: () => void }) => {
+export const AcceptFriendRequest = ({ targetName, close, isMobile }: { targetName: string[]; close: () => void; isMobile?: boolean }) => {
   const [name, tag] = targetName;
+  const emojiMobileWidth = 128;
+  const emojiKMobileHeight = 128;
   return (
-    <Modal className="w-1/2 bg-white rounded-xl shadow-xl p-6">
+    <Modal className={`bg-white rounded-xl shadow-xl ${isMobile ? "w-full p-2 mx-4" : "w-1/2 p-6"}   `}>
       <div className="flex flex-col justify-center items-center gap-4">
-        <Emoji_ClappingHandsLightSkin />
-        <p className="text-2xl font-semibold">새로운 친구가 생겼어요!</p>
-        <p className="text-lg text-gray-500">
+        <Emoji_ClappingHandsLightSkin w={isMobile ? emojiMobileWidth : undefined} h={isMobile ? emojiKMobileHeight : undefined} />
+        <p className={`font-semibold ${isMobile ? "text-lg" : "text-2xl"}`}>새로운 친구가 생겼어요!</p>
+        <p className={`text-gray-500 text-center break-keep ${isMobile ? "text-sm" : "text-lg"}`}>
           이제 <span className="text-black font-semibold">{name}</span>
           <span className="font-semibold">#{tag}</span>님과 대화할 수 있어요.
         </p>
@@ -268,13 +270,13 @@ export const EditProfile = ({ user, close }: { user: any; close: () => void }) =
 };
 
 // 이모티콘 모달
-export const EmojiModal = ({ onClick }: { onClick: (emoji: any) => void }) => {
+export const EmojiModal = ({ onClick, isMobile }: { onClick: (emoji: any) => void; isMobile?: boolean }) => {
   const Emoji = Array.from(
     "😀😃😄😁😆😅🤣😂🙂🙃🫠😉😊😇🥰😍🤩😘😗😚😙🥲😋😛😜🤪😝🤑🤗🤭🫢🫣🤫🤔🫡🤐🤨😐😑😶😒🙄😬😮🤥🫨😌😔😪🤤😴😷🤒🤕🤢🤮🤧🥵🥶🥴😵😵🤯🤠🥳🥸😎🤓🧐😕🫤😟🙁😮😯😲😳🥺🥹😦😧😨😰😥😢😭😱😖😣😞😓😩😫🥱😤😡😠🤬😈👿💀💩🤡👹👺👻👽👾🤖😺😸😹😻😼😽🙀😿😾🙈🙉🙊💋💯💢💥💫💦👋🫱🫲🫳🫴🫷🫸👌🤌🤏🤞🫰🤟🤘🤙👈👉👆🖕👇🫵👍👎✊👊🤛🤜👏🙌🫶👐🤲🤝🙏✍️💅🤳💪🦾🦿🦵🦶👂🦻👃🧠🫀🫁🦷🦴👀👅👄🫦💌💘💝💖💗💓💞💕💟💔🩷🧡💛💚💙🩵💜🤎🖤🩶🤍"
   );
 
   return (
-    <div className="absolute bottom-0 right-0 -translate-y-8 w-96 h-48 p-4">
+    <div className={`absolute bottom-0 right-0  p-4 ${isMobile ? "w-72 h-24 -translate-y-12" : "w-96 h-48 -translate-y-8"}`}>
       <div className="z-10 w-full h-full overflow-y-scroll">
         <div className="w-full h-full flex flex-wrap justify-center items-center gap-4">
           {Emoji.map((item, index) => {

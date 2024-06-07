@@ -17,6 +17,59 @@ export default function useChat({ user }: { user: any }) {
   const [acceptFriendReq, setAcceptFriendReq] = useState<boolean>(false);
   const [acceptFriendReqTargetName, setAcceptFriendReqTargetName] = useState<string[] | null>(null);
 
+  const initChat = async () => {
+    setTarget(null);
+    setChatData(null);
+    setChatID(null);
+    await initOnline({ host: user.uid });
+    return;
+  };
+
+  const targetHandler = async (target_uid: any) => {
+    await initOnline({ host: user.uid });
+    await getUserByUid({ uid: target_uid }).then((res) => {
+      setTarget(res);
+      setChatID(res?.friends[user.uid].chat_id);
+    });
+  };
+
+  // 메시지 전송 핸들러
+  const sendMsg = async () => {
+    if (!msg || msg === "") {
+      return alert("메시지 내용을 입력해주세요.");
+    }
+    if (chatID) {
+      await sendChat({ uid: user.uid, tuid: target.uid, chatID: chatID, message: msg });
+    } else {
+      return alert("오잉, 일시적인 오류입니다. 다시 시도해주세요.");
+    }
+    setMsg("");
+  };
+
+  // 이모티콘 입력 창에 삽입 핸들러
+  const inputEmoji = ({ emoji }: { emoji: any }) => {
+    setMsg((prev) => (prev || "") + emoji);
+  };
+
+  // 친구 수락시 모달 디스플레이
+  const acceptFriendReqModalHandler = () => {
+    setAcceptFriendReq(!acceptFriendReq);
+  };
+
+  const acceptReqHandler = async () => {
+    try {
+      if (chatID) {
+        const res = await acceptRequest({ uid: user.uid, tuid: target.uid, chatID: chatID });
+        if (res) {
+          setAcceptFriendReqTargetName([res?.name, res?.tag]);
+          acceptFriendReqModalHandler();
+        }
+      }
+    } catch (error) {
+      console.error("친구 요청 수락 중 오류 발생:", error);
+    }
+  };
+
   // target이 정해지면 채팅 내역을 가져오자
   useEffect(() => {
     if (!target || !target.friends || !user) return;
@@ -82,50 +135,6 @@ export default function useChat({ user }: { user: any }) {
     };
   }, [chatID, target, user]);
 
-  const targetHandler = async (target_uid: any) => {
-    await initOnline({ host: user.uid });
-    await getUserByUid({ uid: target_uid }).then((res) => {
-      setTarget(res);
-      setChatID(res?.friends[user.uid].chat_id);
-    });
-  };
-
-  // 메시지 전송 핸들러
-  const sendMsg = async () => {
-    if (!msg || msg === "") {
-      return alert("메시지 내용을 입력해주세요.");
-    }
-    if (chatID) {
-      await sendChat({ uid: user.uid, tuid: target.uid, chatID: chatID, message: msg });
-    } else {
-      return alert("오잉, 일시적인 오류입니다. 다시 시도해주세요.");
-    }
-    setMsg("");
-  };
-
-  // 이모티콘 입력 창에 삽입 핸들러
-  const inputEmoji = ({ emoji }: { emoji: any }) => {
-    setMsg((prev) => (prev || "") + emoji);
-  };
-
-  // 친구 수락시 모달 디스플레이
-  const acceptFriendReqModalHandler = () => {
-    setAcceptFriendReq(!acceptFriendReq);
-  };
-
-  const acceptReqHandler = async () => {
-    try {
-      if (chatID) {
-        const res = await acceptRequest({ uid: user.uid, tuid: target.uid, chatID: chatID });
-        if (res) {
-          setAcceptFriendReqTargetName([res?.name, res?.tag]);
-          acceptFriendReqModalHandler();
-        }
-      }
-    } catch (error) {
-      console.error("친구 요청 수락 중 오류 발생:", error);
-    }
-  };
   return {
     target: target,
     chatData: chatData,
@@ -136,6 +145,7 @@ export default function useChat({ user }: { user: any }) {
     displayEmoji: displayEmoji,
     setDisplayEmoji: setDisplayEmoji,
     sendMsg: sendMsg,
+    initChat: initChat,
     inputEmoji: inputEmoji,
     acceptFriendReqModalHandler: acceptFriendReqModalHandler,
     acceptReqHandler: acceptReqHandler,
