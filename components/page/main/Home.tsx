@@ -103,7 +103,7 @@ const Menu = ({
         <div className="w-full flex justify-between items-center gap-4">
           {/* 프로필 이미지 */}
           <div className="flex justify-center items-center rounded-full overflow-hidden border">
-            <Image src={user.photoURL ?? "/user.png"} width={80} height={80} alt="user_icon" />
+            <Image src={user.photoURL ?? "/user.png"} width={80} height={80} alt="user_icon" about="public"/>
           </div>
           {/* 이름, 상태메시지 */}
           <div className="flex flex-col w-full truncate">
@@ -200,7 +200,7 @@ const FriendList = ({ user, friends, targetHandler }: { user: any; friends: any 
           }}
         >
           <div className="flex justify-center items-center rounded-full overflow-hidden border">
-            <Image src={item.photoURL || "/user.png"} width={60} height={60} alt="user_icon" />
+            <Image src={item.photoURL || "/user.png"} width={60} height={60} alt="user_icon" about="public" />
           </div>
           <div className="w-full flex flex-col truncate">
             <div className="flex items-center w-full">
@@ -236,7 +236,7 @@ const Chat = ({ user, chat }: { user: any; chat: any }) => {
           {/* 헤더 */}
           <div className="flex justify-start items-center gap-4 border-b pb-2">
             <div className="flex justify-center items-center rounded-full overflow-hidden border">
-              <Image src={chat.target.photoURL || `/user.png`} width={60} height={60} alt="user_icon" />
+              <Image src={chat.target.photoURL || `/user.png`} width={60} height={60} alt="user_icon" about="public"/>
             </div>
             <div className="w-full flex flex-col items-start">
               <p className="text-xl font-semibold">{chat.target.name} </p>
@@ -270,7 +270,7 @@ const Chat = ({ user, chat }: { user: any; chat: any }) => {
                             </div>
                             <p className="max-w-half bg-blue-500 text-white px-4 py-2 text-sm rounded-tl-xl rounded-tr-xl rounded-bl-xl">{item.message}</p>
                             <div className="flex justify-center items-center rounded-full overflow-hidden border">
-                              <Image src={user.photoURL || `/user.png`} width={30} height={30} alt="user_icon" />
+                              <Image src={user.photoURL || `/user.png`} width={30} height={30} alt="user_icon" about="public"/>
                             </div>
                           </div>
                         ) : (
@@ -278,7 +278,7 @@ const Chat = ({ user, chat }: { user: any; chat: any }) => {
                           <div className="flex gap-2 justify-start items-end">
                             {/* 상대방 */}
                             <div className="flex justify-center items-center rounded-full overflow-hidden border">
-                              <Image src={chat.target.photoURL || `/user.png`} width={30} height={30} alt="user_icon" />
+                              <Image src={chat.target.photoURL || `/user.png`} width={30} height={30} alt="user_icon" about="public"/>
                             </div>
                             <p className="max-w-half bg-slate-100 px-4 py-2 text-sm rounded-tr-xl rounded-tl-xl rounded-br-xl">{item.message}</p>
                             <p className="text-xs text-gray-400">{item.showTime && chatTime}</p>

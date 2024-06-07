@@ -156,7 +156,7 @@ export const FindFriend = ({
           </div>
           <div className="w-full flex flex-col justify-center items-center gap-4 truncate mb-4 pb-2">
             <div className="flex justify-center items-center rounded-full overflow-hidden border-4 border-gray-200 shadow-md">
-              <Image src={targetData.photoURL ?? "/user.png"} width={80} height={80} alt="user_icon" className="object-cover" />
+              <Image src={targetData.photoURL ?? "/user.png"} width={80} height={80} alt="user_icon" className="object-cover" about="public"/>
             </div>
             <div className="flex flex-col items-center">
               <p className="text-xl font-medium text-gray-900">{targetData.name}</p>
@@ -230,7 +230,7 @@ export const EditProfile = ({ user, close }: { user: any; close: () => void }) =
       <div className="flex flex-col items-center gap-4">
         {/* 프로필 사진 */}
         <div className="w-20 h-20 flex justify-center items-center rounded-full overflow-hidden border">
-          <Image src={profile.photoURL || ""} width={80} height={80} alt="프로필 사진" />
+          <Image src={profile.photoURL || ""} width={80} height={80} alt="프로필 사진" about="public"/>
         </div>
         {/* 이름 입력 */}
         <div className="flex flex-col items-start w-full gap-1">
