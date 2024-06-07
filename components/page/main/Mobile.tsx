@@ -132,7 +132,7 @@ const Chat = ({ user, chat, icon }: { user: any; chat: any; icon: any }) => {
             }}
           />
           <div className="flex justify-center items-center rounded-full overflow-hidden border">
-            <Image src={chat.target.photoURL || `/user.png`} width={60} height={60} alt="user_icon" about="public" />
+            <Image src={chat.target.photoURL || `/user.png`} width={60} height={60} alt="user_icon" />
           </div>
         </div>
         <div className="w-full flex flex-col items-start">
@@ -169,7 +169,7 @@ const Chat = ({ user, chat, icon }: { user: any; chat: any; icon: any }) => {
                           <p>{item.message}</p>
                         </div>
                         <div className="flex justify-center items-center rounded-full overflow-hidden border">
-                          <Image src={user.photoURL || `/user.png`} width={30} height={30} alt="user_icon" about="public" />
+                          <Image src={user.photoURL || `/user.png`} width={30} height={30} alt="user_icon" />
                         </div>
                       </div>
                     ) : (
@@ -177,7 +177,7 @@ const Chat = ({ user, chat, icon }: { user: any; chat: any; icon: any }) => {
                       <div className="flex gap-2 justify-start items-end">
                         {/* 상대방 */}
                         <div className="flex justify-center items-center rounded-full overflow-hidden border">
-                          <Image src={chat.target.photoURL || `/user.png`} width={30} height={30} alt="user_icon" about="public" />
+                          <Image src={chat.target.photoURL || `/user.png`} width={30} height={30} alt="user_icon" />
                         </div>
                         <div className="max-w-72 bg-slate-100 p-3 text-sm rounded-tr-xl rounded-tl-xl rounded-br-xl break-all">
                           <p>{item.message}</p>
@@ -256,7 +256,7 @@ const Profile = ({
     <div className="w-full flex gap-2 justify-between" onClick={() => onClick(isHost, isHost ? null : user.uid)}>
       {/* 프로필 이미지 */}
       <div className="flex justify-center items-center rounded-full overflow-hidden border w-fit h-fit">
-        <Image src={user.photoURL ?? "/user.png"} width={isHost ? 60 : 40} height={isHost ? 60 : 40} alt="user_icon" about="public" />
+        <Image src={user.photoURL ?? "/user.png"} width={isHost ? 60 : 40} height={isHost ? 60 : 40} alt="user_icon" />
       </div>
       {/* 이름, 상태메시지 */}
       <div className="flex-1 w-full flex flex-col justify-center truncate">
