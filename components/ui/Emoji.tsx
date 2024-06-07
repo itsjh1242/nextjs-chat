@@ -19,7 +19,7 @@ export const Emoji_WomanGesturingNoMediumLightSkinTone = ({ w, h }: { w?: number
 };
 
 export const Emoji_ClappingHandsLightSkin = ({ w, h }: { w?: number; h?: number }) => {
-  return <Image src="/emoji.Clapping Hands Light Skin Tone.png" alt="Clapping Hands Light Skin Tone" width={w || 256} height={h || 256} />;
+  return <Image src="/emoji/Clapping Hands Light Skin Tone.png" alt="Clapping Hands Light Skin Tone" width={w || 256} height={h || 256} />;
 };
 
 export const Emoji_HandGesturesWavingHandMediumLight = ({ w, h }: { w?: number; h?: number }) => {
