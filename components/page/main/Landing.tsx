@@ -1,4 +1,5 @@
 "use client";
+
 import Image from "next/image";
 import { handleLogin, useAuth, handleLogOut, useLeaveObserver } from "@/lib/useAuth";
 
