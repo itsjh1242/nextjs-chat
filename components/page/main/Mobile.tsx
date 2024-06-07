@@ -37,7 +37,7 @@ export default function Mobile({
   };
   if (chat.target) return <Chat user={user} chat={chat} icon={icon} />;
   return (
-    <main className="w-screen min-h-dvh flex flex-col justify-start items-center px-3 py-6">
+    <main className="w-screen h-dvh flex flex-col justify-start items-center px-3 py-6">
       {/* 친구 검색 모달 */}
       {searchModal.show ? searchModal?.modal : null}
       {/* 친구 검색 성공 시 모달 */}
@@ -118,12 +118,12 @@ const Chat = ({ user, chat, icon }: { user: any; chat: any; icon: any }) => {
   };
   if (!chat.chatData) return <LoadingChatData />;
   return (
-    <main className="w-screen h-screen max-h-screen flex flex-col justify-start items-center px-3 py-6">
+    <main className="w-screen h-dvh flex flex-col justify-start items-center px-3 py-6">
       {chat.acceptFriendReq && chat.acceptFriendReqTargetName && (
         <AcceptFriendRequest targetName={chat.acceptFriendReqTargetName} close={chat.acceptFriendReqModalHandler} isMobile={true} />
       )}
       {/* 헤더 */}
-      <div className="w-full flex justify-start items-center gap-4 border-b pb-2">
+      <div className="sticky w-full flex justify-start items-center gap-4 border-b pb-2 bg-white">
         <div className="flex justify-center items-center">
           <icon.VscChevronLeft
             size={40}
