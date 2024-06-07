@@ -10,7 +10,6 @@ import { Emoji_LoveLetter } from "@/components/ui/Emoji";
 
 export default function LandingPage() {
   const isLogin = useAuth();
-
   const userData = useUser();
   useLeaveObserver(userData.user?.uid);
 

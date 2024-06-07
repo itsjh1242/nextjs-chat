@@ -23,6 +23,12 @@ export default function HomePage({ userData, isLogin, logout }: { userData: any;
   // 실시간 채팅 데이터
   const chat = useChat({ user: user });
 
+  const handleLogout = (uid: string) => {
+    logout(uid);
+    chat.initChat();
+    return;
+  };
+
   if (!isLogin) return <NotUser />;
   if (!user) return <Loading />;
   if (mobile)
@@ -30,7 +36,7 @@ export default function HomePage({ userData, isLogin, logout }: { userData: any;
       <Mobile
         userData={userData}
         isLogin={isLogin}
-        logout={logout}
+        logout={handleLogout}
         chat={chat}
         friends={friends}
         icon={{ VscSmiley, VscSend, VscUnlock, VscEdit, VscSearch, VscChevronLeft }}
@@ -52,7 +58,7 @@ export default function HomePage({ userData, isLogin, logout }: { userData: any;
         <Menu
           user={user}
           friends={friends}
-          logout={logout}
+          logout={handleLogout}
           targetHandler={(target_uid: any) => {
             chat?.targetHandler(target_uid);
           }}
@@ -239,7 +245,10 @@ const Chat = ({ user, chat }: { user: any; chat: any }) => {
               <Image src={chat.target.photoURL || `/user.png`} width={60} height={60} alt="user_icon" />
             </div>
             <div className="w-full flex flex-col items-start">
-              <p className="text-xl font-semibold">{chat.target.name} </p>
+              <div className="flex items-center w-full">
+                <p className="text-xl font-semibold">{chat.target.name} </p>
+                <p className="text-sm text-gray-500 truncate">#{chat.target.tag}</p>
+              </div>
               <p className="text-xs text-gray-500 w-full truncate">{chat.target.status_msg}</p>
             </div>
           </div>

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { User } from "firebase/auth";
 import { auth, signInWithGoogle, signOut } from "@/db/firebase";
 import { initOnline } from "@/controller/chat";
+import useChat from "./useChat";
 
 // 구글 로그인
 export const handleLogin = async () => {
@@ -9,7 +10,7 @@ export const handleLogin = async () => {
 };
 
 // 로그아웃
-export const handleLogOut = (uid: string) => {
+export const handleLogOut = ({ uid }: { uid: string }) => {
   initOnline({ host: uid }).then(() => {
     signOut();
   });

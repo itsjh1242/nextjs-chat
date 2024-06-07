@@ -17,7 +17,7 @@ export default function Mobile({
 }: {
   userData: any;
   isLogin: any;
-  logout: any;
+  logout: (uid: string) => void;
   chat: any;
   friends: any;
   icon: any;
@@ -74,7 +74,13 @@ export default function Mobile({
             <p>검색</p>
           </CustomButtonSmall>
           {/* 로그아웃 */}
-          <CustomButtonSmall className="flex justify-center items-center gap-2" color="gray" onClick={logout}>
+          <CustomButtonSmall
+            className="flex justify-center items-center gap-2"
+            color="gray"
+            onClick={() => {
+              logout(user.uid);
+            }}
+          >
             <icon.VscUnlock size={20} />
             <p>로그아웃</p>
           </CustomButtonSmall>
@@ -136,7 +142,10 @@ const Chat = ({ user, chat, icon }: { user: any; chat: any; icon: any }) => {
           </div>
         </div>
         <div className="w-full flex flex-col items-start">
-          <p className="text-xl font-semibold">{chat.target.name} </p>
+          <div className="flex items-center w-full">
+            <p className="text-xl font-semibold">{chat.target.name} </p>
+            <p className="text-sm text-gray-500 truncate">#{chat.target.tag}</p>
+          </div>
           <p className="text-xs text-gray-500 w-full truncate">{chat.target.status_msg}</p>
         </div>
       </div>
