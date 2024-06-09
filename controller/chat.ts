@@ -94,19 +94,25 @@ export async function sendChat({ uid, tuid, chatID, message }: { uid: string; tu
     const targetDoc = await getDoc(targetDocRef);
     const targetData = targetDoc.data();
 
+    let updatedMsg = message;
+    // 메시지 길이 제한
+    if (updatedMsg.length() >= 50) {
+      updatedMsg = updatedMsg.substring(0, 50);
+    }
+
     // 채팅 데이터 저장
-    const updatedChat = [{ sender: uid, message: message, timestamp: new Date(), read: isOnline }, ...chatData?.chat];
+    const updatedChat = [{ sender: uid, message: updatedMsg, timestamp: new Date(), read: isOnline }, ...chatData?.chat];
     await updateDoc(chatDocRef, { chat: updatedChat });
 
     let updatedMessageSelf = {
       ...HostData?.friends[tuid],
-      latestMsg: message,
+      latestMsg: updatedMsg,
       lastMsgAt: new Date(),
     };
 
     let updatedMessageTarget = {
       ...targetData?.friends[uid],
-      latestMsg: message,
+      latestMsg: updatedMsg,
       lastMsgAt: new Date(),
       unReadMsg: isOnline ? 0 : targetData?.friends[uid]?.unReadMsg + 1,
     };
