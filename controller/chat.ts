@@ -96,7 +96,7 @@ export async function sendChat({ uid, tuid, chatID, message }: { uid: string; tu
 
     let updatedMsg = message;
     // 메시지 길이 제한
-    if (updatedMsg.length() >= 50) {
+    if (updatedMsg.length >= 50) {
       updatedMsg = updatedMsg.substring(0, 50);
     }
 
